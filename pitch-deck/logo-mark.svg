@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <!-- Agent Circles — Icon Mark Only -->
+  <g transform="translate(120, 120)">
+    <!-- Outer rotation arc -->
+    <path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#arc-g)" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/>
+
+    <!-- 5 member nodes -->
+    <circle cx="0" cy="-82" r="16" fill="#4f8ff7"/>
+    <circle cx="0" cy="-82" r="8" fill="#0a0a0c"/>
+
+    <circle cx="78" cy="-25.3" r="13" fill="#9580ff" opacity="0.85"/>
+    <circle cx="78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
+
+    <circle cx="48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.7"/>
+    <circle cx="48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
+
+    <circle cx="-48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.55"/>
+    <circle cx="-48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
+
+    <circle cx="-78" cy="-25.3" r="13" fill="#9580ff" opacity="0.4"/>
+    <circle cx="-78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
+
+    <!-- Inner connections -->
+    <line x1="0" y1="-82" x2="78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+    <line x1="78" y1="-25.3" x2="48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+    <line x1="48.2" y1="66.3" x2="-48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+    <line x1="-48.2" y1="66.3" x2="-78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+    <line x1="-78" y1="-25.3" x2="0" y2="-82" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+
+    <!-- Center pot -->
+    <circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/>
+  </g>
+
+  <defs>
+    <linearGradient id="arc-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f8ff7"/>
+      <stop offset="100%" stop-color="#9580ff"/>
+    </linearGradient>
+  </defs>
+</svg>

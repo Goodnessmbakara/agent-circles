@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import * as db from "../db/queries.js";
 import { config } from "../config.js";
-import { Keypair } from "@stellar/stellar-sdk";
+import * as reminders from "../store/reminder-queue.js";
+import { getManagerFees } from "../stellar/pool-reader.js";
+import * as registry from "../store/pool-registry.js";
 
 const RemindSchema = z.object({
   contract_id: z.string(),
@@ -15,17 +16,28 @@ export async function agentRoutes(app: FastifyInstance) {
   // Schedule a contribution reminder for a member
   app.post("/agent/remind", async (request) => {
     const body = RemindSchema.parse(request.body);
-    db.addReminder(body.contract_id, body.member, body.remind_at, body.message);
-    return { data: { scheduled: true } };
+    const reminder = reminders.add(body.contract_id, body.member, body.remind_at, body.message);
+    return { data: { scheduled: true, id: reminder.id } };
   });
 
-  // Aggregate fee summary for the configured agent address
+  // Aggregate fee summary — reads live from each known contract
   app.get("/agent/fee-summary", async () => {
-    let agentAddress = "";
-    if (config.agentSecretKey) {
-      agentAddress = Keypair.fromSecret(config.agentSecretKey).publicKey();
-    }
-    const summary = db.getAgentFeeSummary(agentAddress);
-    return { data: { agent_address: agentAddress, ...summary } };
+    const agentAddress = config.agentPublicKey;
+    const ids = registry.listIds();
+
+    let total = 0n;
+    let pools = 0;
+
+    await Promise.allSettled(
+      ids.map(async (id) => {
+        const fees = await getManagerFees(id);
+        if (fees > 0n) {
+          total += fees;
+          pools++;
+        }
+      }),
+    );
+
+    return { data: { agent_address: agentAddress, total: total.toString(), pools } };
   });
 }

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Circles — Pitch Deck | Ajo Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --s-4: 4px; --s-8: 8px; --s-12: 12px; --s-16: 16px;
+    --s-24: 24px; --s-32: 32px; --s-40: 40px; --s-48: 48px;
+
+    --surface-base: #0a0a0c;
+    --surface-raised: #131316;
+    --surface-overlay: #1c1c21;
+    --border-subtle: rgba(255,255,255,0.06);
+    --border-default: rgba(255,255,255,0.1);
+    --text-primary: #ededef;
+    --text-secondary: #9494a0;
+    --text-tertiary: #62626e;
+    --accent: #4f8ff7;
+    --accent-muted: rgba(79,143,247,0.12);
+    --accent-border: rgba(79,143,247,0.24);
+    --positive: #3ecf8e;
+    --positive-muted: rgba(62,207,142,0.12);
+    --positive-border: rgba(62,207,142,0.24);
+    --warning: #f0b429;
+    --negative: #f25c5c;
+    --violet: #9580ff;
+    --violet-muted: rgba(149,128,255,0.12);
+    --font-display: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--surface-base);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* =========================================
+     PRINT STYLES
+     ========================================= */
+  @media print {
+    body {
+      background: white;
+      color: #111;
+      font-size: 8.5pt;
+      line-height: 1.3;
+    }
+    :root {
+      --surface-base: #fff; --surface-raised: #f8f8f9; --surface-overlay: #f0f0f2;
+      --border-subtle: #e4e4e7; --border-default: #d4d4d8;
+      --text-primary: #111; --text-secondary: #555; --text-tertiary: #888;
+      --accent: #2563eb; --accent-muted: #eff4ff; --accent-border: #bfdbfe;
+      --positive: #16a34a; --positive-muted: #f0fdf4; --positive-border: #bbf7d0;
+      --negative: #dc2626; --warning: #d97706;
+      --violet: #7c3aed; --violet-muted: #f5f3ff;
+    }
+    .page { padding: 0; max-width: none; box-shadow: none; }
+    .section-block { break-inside: avoid; page-break-inside: avoid; }
+    .card, .flow-step, .arch-box, .callout, .compare-table, .badge,
+    .section-header, .section-footer {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .section-header svg path, .section-header svg circle,
+    .section-header svg line, .section-header svg polygon {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+
+  /* =========================================
+     PAGE LAYOUT
+     ========================================= */
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: var(--s-40) var(--s-32);
+  }
+
+  /* =========================================
+     SECTION BLOCK — each has header + content + footer
+     ========================================= */
+  .section-block {
+    margin-bottom: var(--s-32);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--s-12);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--s-16);
+  }
+
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--s-12);
+  }
+
+  .section-header .logo-inline {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .section-header .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--accent);
+  }
+
+  .section-header .section-page {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+  }
+
+  .section-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--s-12);
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--s-16);
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  .section-footer .footer-brand {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .section-content { }
+
+  /* =========================================
+     TITLE SECTION (special)
+     ========================================= */
+  .title-section {
+    text-align: center;
+    padding: var(--s-32) 0 var(--s-24);
+    margin-bottom: var(--s-32);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .title-logo { margin-bottom: var(--s-16); }
+
+  .title-section h1 {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+  }
+
+  .title-section .subtitle {
+    font-size: 17px;
+    color: var(--text-secondary);
+    margin-top: var(--s-8);
+    font-weight: 300;
+  }
+
+  .title-meta {
+    display: flex;
+    justify-content: center;
+    gap: var(--s-8);
+    margin-top: var(--s-16);
+  }
+
+  .title-section .org-line {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: var(--s-12);
+  }
+
+  /* =========================================
+     TYPOGRAPHY
+     ========================================= */
+  section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    margin-bottom: var(--s-16);
+    line-height: 1.25;
+  }
+
+  section p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  /* =========================================
+     GRIDS
+     ========================================= */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-16); }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s-16); }
+
+  /* =========================================
+     CARDS
+     ========================================= */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: var(--s-24);
+  }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: var(--s-8); }
+  .card p { font-size: 12px; line-height: 1.55; }
+  .card-accent { background: var(--accent-muted); border-color: var(--accent-border); }
+  .card-positive { background: var(--positive-muted); border-color: var(--positive-border); }
+
+  /* =========================================
+     BADGES
+     ========================================= */
+  .badges { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-12); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 16px;
+    font-size: 10px; font-weight: 600;
+  }
+  .badge-blue { background: var(--accent-muted); color: var(--accent); }
+  .badge-green { background: var(--positive-muted); color: var(--positive); }
+  .badge-purple { background: var(--violet-muted); color: var(--violet); }
+  .badge-amber { background: rgba(240,180,41,0.12); color: var(--warning); }
+
+  /* =========================================
+     FLOW
+     ========================================= */
+  .flow { display: flex; gap: 0; }
+  .flow-step {
+    flex: 1; background: var(--surface-raised); border: 1px solid var(--border-subtle);
+    padding: var(--s-16) var(--s-12); text-align: center;
+  }
+  .flow-step:first-child { border-radius: 10px 0 0 10px; }
+  .flow-step:last-child { border-radius: 0 10px 10px 0; }
+  .flow-step:not(:last-child) { border-right: none; }
+  .flow-step .num { font-size: 10px; font-weight: 700; font-family: var(--font-mono); color: var(--accent); margin-bottom: var(--s-4); }
+  .flow-step h4 { font-size: 12px; font-weight: 600; }
+  .flow-step p { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* =========================================
+     CALLOUT
+     ========================================= */
+  .callout {
+    background: var(--surface-raised); border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent); border-radius: 2px 10px 10px 2px;
+    padding: var(--s-16) var(--s-24); margin-top: var(--s-16);
+  }
+  .callout p { font-size: 12px; line-height: 1.55; }
+  .callout strong { color: var(--text-primary); }
+
+  /* =========================================
+     ARCHITECTURE
+     ========================================= */
+  .arch { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); }
+  .arch-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-tertiary); margin-top: var(--s-8); margin-bottom: var(--s-4); }
+  .arch-row { display: flex; gap: var(--s-8); justify-content: center; width: 100%; }
+  .arch-box { background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 8px; padding: var(--s-12) var(--s-16); font-size: 11px; font-weight: 500; text-align: center; flex: 1; max-width: 180px; }
+  .arch-box.accent { background: var(--accent-muted); border-color: var(--accent-border); }
+  .arch-box.positive { background: var(--positive-muted); border-color: var(--positive-border); }
+  .arch-connector { width: 1px; height: 10px; background: var(--border-default); }
+
+  /* =========================================
+     TABLE
+     ========================================= */
+  .compare-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; font-size: 12px;
+  }
+  .compare-table th {
+    background: var(--surface-overlay); padding: var(--s-8) var(--s-16); text-align: left;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-tertiary); border-bottom: 1px solid var(--border-default);
+  }
+  .compare-table td { padding: var(--s-8) var(--s-16); color: var(--text-secondary); }
+  .compare-table td:first-child { font-weight: 500; color: var(--text-primary); }
+  .compare-table tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border-subtle); }
+  .check { color: var(--positive); font-weight: 700; }
+  .cross { color: var(--text-tertiary); }
+
+  /* =========================================
+     TIMELINE
+     ========================================= */
+  .tl-item { display: flex; gap: var(--s-12); align-items: flex-start; margin-bottom: var(--s-12); }
+  .tl-marker {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--surface-raised);
+    border: 2px solid var(--accent-border); display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: var(--accent); flex-shrink: 0;
+  }
+  .tl-content h4 { font-size: 13px; font-weight: 600; }
+  .tl-content p { font-size: 11px; color: var(--text-tertiary); line-height: 1.45; margin-top: 1px; }
+
+  /* =========================================
+     BULLETS
+     ========================================= */
+  .bullets { list-style: none; }
+  .bullets li {
+    font-size: 12px; color: var(--text-secondary); padding: var(--s-4) 0;
+    padding-left: var(--s-16); position: relative; line-height: 1.45;
+  }
+  .bullets li::before {
+    content: ''; position: absolute; left: 0; top: 9px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  }
+  .bullets strong { color: var(--text-primary); }
+
+  /* =========================================
+     STATS
+     ========================================= */
+  .stats-row { display: flex; justify-content: center; gap: var(--s-48); padding: var(--s-24) 0; }
+  .stat { text-align: center; }
+  .stat .number { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--accent); }
+  .stat .label { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1.5px; margin-top: var(--s-4); }
+
+  /* =========================================
+     DIVIDER
+     ========================================= */
+  .divider { height: 1px; background: var(--border-subtle); margin: var(--s-24) 0; }
+
+  /* =========================================
+     RESPONSIVE
+     ========================================= */
+  @media (max-width: 640px) {
+    .page { padding: var(--s-24) var(--s-16); }
+    .title-section h1 { font-size: 28px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; }
+    .flow-step { border-radius: 8px !important; border-right: 1px solid var(--border-subtle) !important; }
+    .arch-row { flex-direction: column; }
+    .arch-box { max-width: none; }
+    .stats-row { gap: var(--s-24); }
+    .section-header { flex-direction: column; gap: var(--s-8); align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ==========================================
+       TITLE
+       ========================================== -->
+  <div class="title-section">
+    <div class="title-logo">
+      <svg width="56" height="56" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(120, 120)">
+          <path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag1)" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/>
+          <circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="#0a0a0c"/>
+          <circle cx="78" cy="-25.3" r="13" fill="#9580ff" opacity="0.85"/><circle cx="78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
+          <circle cx="48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.7"/><circle cx="48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
+          <circle cx="-48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.55"/><circle cx="-48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
+          <circle cx="-78" cy="-25.3" r="13" fill="#9580ff" opacity="0.4"/><circle cx="-78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
+          <line x1="0" y1="-82" x2="78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+          <line x1="78" y1="-25.3" x2="48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+          <line x1="48.2" y1="66.3" x2="-48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+          <line x1="-48.2" y1="66.3" x2="-78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+          <line x1="-78" y1="-25.3" x2="0" y2="-82" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
+          <circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/>
+        </g>
+        <defs><linearGradient id="ag1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs>
+      </svg>
+    </div>
+    <h1>Agent Circles</h1>
+    <p class="subtitle">On-chain rotating savings with autonomous AI operators</p>
+    <div class="title-meta">
+      <span class="badge badge-blue">Stellar / Soroban</span>
+      <span class="badge badge-purple">Agentic AI Track</span>
+      <span class="badge badge-green">DeFi</span>
+    </div>
+    <p class="org-line">Ajo Labs &middot; Stellar World Assembly 2026</p>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 1: THE PROBLEM
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag2)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">The Problem</span>
+      </div>
+      <span class="section-page">01 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <h2>1.7 billion people save through rotating circles. Too many fail.</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="color: var(--negative);">Trust Failure</h3>
+          <p>A member collects the pot early and disappears. No enforcement mechanism. The group loses money and trust collapses.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--warning);">Coordination Failure</h3>
+          <p>The organizer manually tracks payments, chases late contributors, calculates schedules. Unpaid labor that leads to burnout.</p>
+        </div>
+      </div>
+      <p style="font-size: 11px; color: var(--text-tertiary); margin-top: var(--s-12);">
+        Known as ajo (Nigeria), susu (Ghana), tanda (Mexico), chit fund (India), hagbad (Somalia) — the oldest savings mechanism, still running on trust and spreadsheets.
+      </p>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 2: THE SOLUTION
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag3)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">The Solution</span>
+      </div>
+      <span class="section-page">02 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <h2>Smart contracts for enforcement. AI agents for coordination.</h2>
+      <div class="grid-2">
+        <div class="card card-accent">
+          <h3>On-Chain Rules</h3>
+          <p>A Soroban smart contract locks contributions, enforces rotation order, and auto-distributes payouts. No one can run with the pot.</p>
+          <div class="badges">
+            <span class="badge badge-blue">Soroban</span>
+            <span class="badge badge-blue">Rust</span>
+            <span class="badge badge-blue">USDC</span>
+          </div>
+        </div>
+        <div class="card card-positive">
+          <h3>Agent Operators</h3>
+          <p>AI agents manage pools autonomously — advance rounds, remind members, onboard users via chat, and earn transparent on-chain fees.</p>
+          <div class="badges">
+            <span class="badge badge-purple">Claude</span>
+            <span class="badge badge-purple">Tool Use</span>
+            <span class="badge badge-green">Keeper</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 3: HOW IT WORKS
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag4)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">How It Works</span>
+      </div>
+      <span class="section-page">03 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <h2>The ROSCA Cycle</h2>
+      <div class="flow">
+        <div class="flow-step"><div class="num">01</div><h4>Create</h4><p>Set amount, period, members</p></div>
+        <div class="flow-step"><div class="num">02</div><h4>Join</h4><p>Members fill the pool</p></div>
+        <div class="flow-step"><div class="num">03</div><h4>Contribute</h4><p>Everyone pays each round</p></div>
+        <div class="flow-step"><div class="num">04</div><h4>Payout</h4><p>One member gets the pot</p></div>
+        <div class="flow-step"><div class="num">05</div><h4>Rotate</h4><p>Repeat for all members</p></div>
+      </div>
+      <div class="callout">
+        <p><strong>Example:</strong> 5 members &times; 10 USDC = 50 USDC pot. Each pays 50 total, receives 50 once (minus agent fee). <strong>Forced savings, not lending.</strong></p>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 4: AGENT AS ECONOMIC ACTOR
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag5)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">Agentic AI</span>
+      </div>
+      <span class="section-page">04 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <h2>The agent isn't a chatbot. It's an economic actor.</h2>
+      <div class="grid-3">
+        <div class="card"><h3>Keeper</h3><p>Monitors pools, advances rounds when conditions are met. Fully autonomous.</p></div>
+        <div class="card"><h3>Coordinator</h3><p>Reminders, onboarding, Q&A — all via natural language chat interface.</p></div>
+        <div class="card"><h3>Fee Earner</h3><p>Earns 0-5% on-chain manager fees. Transparent. Its own Stellar address.</p></div>
+      </div>
+      <p style="font-size: 10px; color: var(--text-tertiary); margin-top: var(--s-12); font-family: var(--font-mono);">
+        10 tools: list_pools &middot; get_pool &middot; create_pool &middot; join_pool &middot; contribute &middot; advance_round &middot; schedule_reminder &middot; get_fee_summary &middot; explain_pool &middot; get_member_status
+      </p>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 5 + 6: ARCHITECTURE + WHY STELLAR
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag6)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag6" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">Architecture &amp; Platform</span>
+      </div>
+      <span class="section-page">05 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <div class="grid-2">
+        <div>
+          <h2 style="font-size: 17px;">System Design</h2>
+          <div class="arch" style="margin-top: var(--s-12);">
+            <div class="arch-label">Frontend</div>
+            <div class="arch-row"><div class="arch-box">React + Tailwind</div><div class="arch-box">Wallet Kit</div></div>
+            <div class="arch-connector"></div>
+            <div class="arch-label">Backend</div>
+            <div class="arch-row"><div class="arch-box accent">Fastify + SQLite</div><div class="arch-box accent">Claude Agent</div></div>
+            <div class="arch-connector"></div>
+            <div class="arch-label">Chain</div>
+            <div class="arch-row"><div class="arch-box positive">Soroban Contract</div><div class="arch-box positive">Stellar (USDC)</div></div>
+          </div>
+        </div>
+        <div>
+          <h2 style="font-size: 17px;">Why Stellar</h2>
+          <table class="compare-table" style="margin-top: var(--s-12);">
+            <thead><tr><th></th><th>Stellar</th><th>EVM</th></tr></thead>
+            <tbody>
+              <tr><td>Fees</td><td><span class="check">&#10003;</span> &lt;$0.001</td><td><span class="cross">&#10007;</span> $0.50+</td></tr>
+              <tr><td>USDC</td><td><span class="check">&#10003;</span> Native</td><td><span class="check">&#10003;</span> ERC-20</td></tr>
+              <tr><td>Finality</td><td><span class="check">&#10003;</span> 5 sec</td><td><span class="cross">&#10007;</span> 12s+</td></tr>
+              <tr><td>Inclusion</td><td><span class="check">&#10003;</span> SDF mission</td><td><span class="cross">&#10007;</span> DeFi-first</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size: 10px; color: var(--text-tertiary); margin-top: var(--s-8);">
+            A 10 USDC circle isn't viable when gas costs $2.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       SECTION 7 + 8: BUILDER + TIMELINE
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag7)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag7" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">Builder &amp; Roadmap</span>
+      </div>
+      <span class="section-page">06 / 08</span>
+    </div>
+
+    <div class="section-content">
+      <div class="grid-2">
+        <div>
+          <h2 style="font-size: 17px;">Goodness Mbakara</h2>
+          <p style="font-size: 11px; color: var(--text-tertiary); margin-bottom: var(--s-8);">Solo Builder &middot; Ajo Labs</p>
+          <ul class="bullets">
+            <li>CTO of <strong>VoxCard</strong> — ROSCA on XION/CosmWasm</li>
+            <li>Built <strong>SaveCircle</strong> — Lightning-powered ROSCA</li>
+            <li><strong>7x hackathon winner</strong></li>
+            <li>Solana Fellow — top 400 / 5,000+</li>
+            <li>2nd place Neon EVM Bootcamp (170+ devs)</li>
+          </ul>
+          <div class="badges">
+            <span class="badge badge-blue">Rust</span>
+            <span class="badge badge-blue">TypeScript</span>
+            <span class="badge badge-purple">Solana</span>
+            <span class="badge badge-purple">CosmWasm</span>
+            <span class="badge badge-green">Lightning</span>
+            <span class="badge badge-amber">Soroban</span>
+          </div>
+        </div>
+        <div>
+          <h2 style="font-size: 17px;">30-Day Testnet MVP</h2>
+          <div style="margin-top: var(--s-8);">
+            <div class="tl-item"><div class="tl-marker">1</div><div class="tl-content"><h4>Soroban Contract</h4><p>ROSCA pool with 17+ tests. Init, join, contribute, payout, fees.</p></div></div>
+            <div class="tl-item"><div class="tl-marker">2</div><div class="tl-content"><h4>Backend API</h4><p>Fastify: tx builder, indexer, keeper. 10 REST endpoints.</p></div></div>
+            <div class="tl-item"><div class="tl-marker">3</div><div class="tl-content"><h4>Frontend</h4><p>React SPA: pool CRUD, wallet connect, contribute flow.</p></div></div>
+            <div class="tl-item"><div class="tl-marker">4</div><div class="tl-content"><h4>Agent + Demo</h4><p>Claude agent, 10 tools. Live 5-member rotation on testnet.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles</span>
+      <span>Ajo Labs &middot; Stellar World Assembly 2026</span>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       CLOSING
+       ========================================== -->
+  <div class="section-block">
+    <div class="section-header">
+      <div class="section-header-left">
+        <svg class="logo-inline" width="28" height="28" viewBox="0 0 240 240" fill="none"><g transform="translate(120,120)"><path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#ag8)" stroke-width="6" stroke-linecap="round" fill="none"/><polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/><circle cx="0" cy="-82" r="16" fill="#4f8ff7"/><circle cx="0" cy="-82" r="8" fill="currentColor"/><circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/></g><defs><linearGradient id="ag8" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#9580ff"/></linearGradient></defs></svg>
+        <span class="section-title">Summary</span>
+      </div>
+      <span class="section-page">08 / 08</span>
+    </div>
+
+    <div class="section-content" style="text-align: center;">
+      <div class="stats-row">
+        <div class="stat"><div class="number">1.7B</div><div class="label">ROSCA users globally</div></div>
+        <div class="stat"><div class="number">$0.001</div><div class="label">Cost per transaction</div></div>
+        <div class="stat"><div class="number">0</div><div class="label">Trust required</div></div>
+      </div>
+      <p style="font-size: 14px; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+        Trustless savings circles powered by Soroban smart contracts and AI agent operators on Stellar.
+      </p>
+    </div>
+
+    <div class="section-footer">
+      <span class="footer-brand">Agent Circles &middot; Goodness Mbakara</span>
+      <span style="font-family: var(--font-mono); font-size: 9px;">github.com/Goodnessmbakara &middot; goodnessmbakara.vercel.app</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

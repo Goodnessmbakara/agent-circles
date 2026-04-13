@@ -2,8 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { Address, nativeToScVal, xdr } from "@stellar/stellar-sdk";
 import { buildContractTx } from "../stellar/tx-builder.js";
+import { getPoolInfo } from "../stellar/pool-reader.js";
 import { config } from "../config.js";
-import * as db from "../db/queries.js";
+import * as registry from "../store/pool-registry.js";
 
 const CreatePoolSchema = z.object({
   admin: z.string(),
@@ -15,30 +16,44 @@ const CreatePoolSchema = z.object({
   manager_fee_bps: z.number().min(0).max(500),
 });
 
+const RegisterSchema = z.object({ contract_id: z.string() });
 const JoinPoolSchema = z.object({ member: z.string() });
 const ContributeSchema = z.object({ member: z.string() });
 
 export async function poolRoutes(app: FastifyInstance) {
-  // List all pools
+  // List all known pools with live on-chain state
   app.get("/pools", async () => {
-    return { data: db.listPools() };
+    const ids = registry.listIds();
+    const pools = await Promise.allSettled(ids.map(getPoolInfo));
+    const data = pools
+      .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof getPoolInfo>>> =>
+        r.status === "fulfilled"
+      )
+      .map((r) => r.value);
+    return { data };
   });
 
-  // Get pool detail + members
+  // Register a newly deployed pool contract ID
+  app.post("/pools/register", async (request) => {
+    const { contract_id } = RegisterSchema.parse(request.body);
+    registry.register(contract_id);
+    return { data: { registered: true, contract_id } };
+  });
+
+  // Get single pool — live from chain
   app.get<{ Params: { id: string } }>("/pools/:id", async (request, reply) => {
-    const pool = db.getPool(request.params.id);
-    if (!pool) {
+    if (!registry.has(request.params.id)) {
       return reply.status(404).send({
         error: { code: "pool_not_found", message: `Pool ${request.params.id} not found`, details: [] },
         request_id: "",
         timestamp: new Date().toISOString(),
       });
     }
-    const members = db.getPoolMembers(request.params.id);
-    return { data: { ...pool, members } };
+    const pool = await getPoolInfo(request.params.id);
+    return { data: pool };
   });
 
-  // Build initialize tx (returns unsigned XDR for client to sign)
+  // Build initialize tx (returns unsigned XDR for client to sign + deploy)
   app.post("/pools", async (request) => {
     const body = CreatePoolSchema.parse(request.body);
 
@@ -53,7 +68,7 @@ export async function poolRoutes(app: FastifyInstance) {
     ];
 
     const result = await buildContractTx({
-      contractId: config.contractId,
+      contractId: body.admin, // placeholder; actual contract ID set post-deploy
       method: "initialize",
       args,
       sourceAddress: body.admin,
@@ -86,7 +101,7 @@ export async function poolRoutes(app: FastifyInstance) {
     return { data: result };
   });
 
-  // Build advance_round tx (caller signs and submits via /api/tx/submit)
+  // Build advance_round tx (agent signs and submits)
   app.post<{ Params: { id: string } }>("/pools/:id/advance", async (request) => {
     if (!config.agentSecretKey) {
       throw Object.assign(new Error("No agent key configured"), { statusCode: 503 });
@@ -102,10 +117,9 @@ export async function poolRoutes(app: FastifyInstance) {
     return { data: result };
   });
 
-  // Get cached pool status + member list
+  // Live pool status from chain
   app.get<{ Params: { id: string } }>("/pools/:id/status", async (request) => {
-    const pool = db.getPool(request.params.id);
-    const members = db.getPoolMembers(request.params.id);
-    return { data: { pool, members } };
+    const pool = await getPoolInfo(request.params.id);
+    return { data: pool };
   });
 }

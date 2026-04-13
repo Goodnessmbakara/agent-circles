@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__exa__web_fetch_exa",
+      "Bash(claude mcp add:*)",
+      "mcp__ref-context__ref_search_documentation",
+      "Bash(open:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo build:*)",
+      "Bash(rustup target:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const rpc = require\\('@stellar/stellar-sdk/rpc'\\); console.log\\(Object.keys\\(rpc\\)\\)\")",
+      "Bash(npx vitest:*)",
+      "Bash(node -e \"const {Contract} = require\\('@stellar/stellar-sdk'\\); const c = new Contract\\('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'\\); const op = c.call\\('get_state'\\); console.log\\(JSON.stringify\\(Object.keys\\(op\\)\\)\\); console.log\\(op.type, op.function\\)\")",
+      "Bash(node -e \"const sdk = require\\('@stellar/stellar-sdk'\\); const c = new sdk.Contract\\('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'\\); const op = c.call\\('get_state'\\); console.log\\(op._attributes\\); console.log\\(Object.getPrototypeOf\\(op\\).constructor.name\\)\")",
+      "Bash(git rm:*)"
+    ]
+  }
+}
