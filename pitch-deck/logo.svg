@@ -1,61 +1,122 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" fill="none">
-  <!-- Agent Circles Logo — Mark + Wordmark -->
-
-  <!-- MARK: Five nodes in a circle connected by a rotating arc path -->
-  <!-- Represents the ROSCA: members connected in rotation -->
-  <g transform="translate(120, 120)">
-    <!-- Outer rotation arc (the "cycle") -->
-    <path d="M 0 -72 A 72 72 0 1 1 -62.35 36" stroke="url(#arc-grad)" stroke-width="5" stroke-linecap="round" fill="none"/>
-    <!-- Arrow head on the arc -->
-    <polygon points="-62.35,36 -52,24 -70,22" fill="#4f8ff7"/>
-
-    <!-- 5 member nodes positioned in a circle -->
-    <!-- Node 1 (top) — highlighted as current recipient -->
-    <circle cx="0" cy="-72" r="14" fill="#4f8ff7"/>
-    <circle cx="0" cy="-72" r="7" fill="#0a0a0c"/>
-
-    <!-- Node 2 -->
-    <circle cx="68.5" cy="-22.2" r="11" fill="#9580ff" opacity="0.85"/>
-    <circle cx="68.5" cy="-22.2" r="5.5" fill="#0a0a0c"/>
-
-    <!-- Node 3 -->
-    <circle cx="42.3" cy="58.2" r="11" fill="#9580ff" opacity="0.7"/>
-    <circle cx="42.3" cy="58.2" r="5.5" fill="#0a0a0c"/>
-
-    <!-- Node 4 -->
-    <circle cx="-42.3" cy="58.2" r="11" fill="#9580ff" opacity="0.55"/>
-    <circle cx="-42.3" cy="58.2" r="5.5" fill="#0a0a0c"/>
-
-    <!-- Node 5 -->
-    <circle cx="-68.5" cy="-22.2" r="11" fill="#9580ff" opacity="0.4"/>
-    <circle cx="-68.5" cy="-22.2" r="5.5" fill="#0a0a0c"/>
-
-    <!-- Inner connecting lines (showing the pool/pot flow) -->
-    <line x1="0" y1="-72" x2="68.5" y2="-22.2" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="68.5" y1="-22.2" x2="42.3" y2="58.2" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="42.3" y1="58.2" x2="-42.3" y2="58.2" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="-42.3" y1="58.2" x2="-68.5" y2="-22.2" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="-68.5" y1="-22.2" x2="0" y2="-72" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-
-    <!-- Center dot — the "pot" -->
-    <circle cx="0" cy="0" r="6" fill="#3ecf8e" opacity="0.9"/>
-  </g>
-
-  <!-- WORDMARK -->
-  <g transform="translate(240, 0)">
-    <!-- "Agent" -->
-    <text x="0" y="108" font-family="Inter, -apple-system, sans-serif" font-size="64" font-weight="300" fill="#9494a0" letter-spacing="-2">Agent</text>
-    <!-- "Circles" -->
-    <text x="235" y="108" font-family="Inter, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ededef" letter-spacing="-2">Circles</text>
-    <!-- Tagline -->
-    <text x="2" y="142" font-family="Inter, -apple-system, sans-serif" font-size="16" font-weight="400" fill="#62626e" letter-spacing="3.5">ON-CHAIN ROTATING SAVINGS</text>
-  </g>
-
-  <!-- Gradient definitions -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 240" fill="none">
   <defs>
-    <linearGradient id="arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4f8ff7"/>
+      <stop offset="60%" stop-color="#7c5ff5"/>
       <stop offset="100%" stop-color="#9580ff"/>
     </linearGradient>
+    <radialGradient id="active-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4f8ff7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4f8ff7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="coin-top" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ffe97a"/>
+      <stop offset="50%" stop-color="#f5c518"/>
+      <stop offset="100%" stop-color="#c9960c"/>
+    </radialGradient>
+    <linearGradient id="coin-side" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d4a017"/>
+      <stop offset="100%" stop-color="#7a5800"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Wordmark gradient -->
+    <linearGradient id="word-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c8c8d8"/>
+      <stop offset="100%" stop-color="#ededef"/>
+    </linearGradient>
   </defs>
+
+  <!-- ===== MARK (left, centered at 120,120) ===== -->
+  <circle cx="120" cy="120" r="115" fill="#0d0d14"/>
+  <circle cx="120" cy="120" r="115" stroke="#1e1e2e" stroke-width="1.5" fill="none"/>
+
+  <!-- Ring track -->
+  <circle cx="120" cy="120" r="88" stroke="#1e1e2e" stroke-width="2" fill="none"/>
+
+  <!-- Rotating arc -->
+  <path d="M 120 32 A 88 88 0 1 1 47 186" stroke="url(#ring-grad)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <g transform="translate(47,186) rotate(220)">
+    <polygon points="0,-9 7,5 -7,5" fill="#9580ff"/>
+  </g>
+
+  <!-- Node 1 — active recipient (top) -->
+  <g transform="translate(120, 32)" filter="url(#glow)">
+    <circle r="22" fill="url(#active-glow)"/>
+    <circle r="15" fill="#1a2a4a" stroke="#4f8ff7" stroke-width="2.5"/>
+    <circle cy="-4" r="5" fill="#4f8ff7"/>
+    <path d="M -6 6 Q 0 2 6 6 Q 6 12 0 12 Q -6 12 -6 6Z" fill="#4f8ff7" opacity="0.9"/>
+    <text y="-14" text-anchor="middle" font-size="8" fill="#ffe97a">★</text>
+  </g>
+
+  <!-- Node 2 -->
+  <g transform="translate(208, 97.7)">
+    <circle r="13" fill="#1a1a2e" stroke="#7c5ff5" stroke-width="2" opacity="0.9"/>
+    <circle cy="-3.5" r="4.5" fill="#7c5ff5" opacity="0.85"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#7c5ff5" opacity="0.75"/>
+  </g>
+
+  <!-- Node 3 -->
+  <g transform="translate(174.2, 186.3)">
+    <circle r="13" fill="#1a1a2e" stroke="#8d72f7" stroke-width="2" opacity="0.75"/>
+    <circle cy="-3.5" r="4.5" fill="#8d72f7" opacity="0.7"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#8d72f7" opacity="0.6"/>
+  </g>
+
+  <!-- Node 4 -->
+  <g transform="translate(65.8, 186.3)">
+    <circle r="13" fill="#1a1a2e" stroke="#9580ff" stroke-width="2" opacity="0.6"/>
+    <circle cy="-3.5" r="4.5" fill="#9580ff" opacity="0.55"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#9580ff" opacity="0.45"/>
+  </g>
+
+  <!-- Node 5 -->
+  <g transform="translate(32, 97.7)">
+    <circle r="13" fill="#1a1a2e" stroke="#9580ff" stroke-width="2" opacity="0.45"/>
+    <circle cy="-3.5" r="4.5" fill="#9580ff" opacity="0.4"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#9580ff" opacity="0.3"/>
+  </g>
+
+  <!-- Spoke lines -->
+  <line x1="120" y1="47" x2="120" y2="95" stroke="#4f8ff7" stroke-width="1" opacity="0.12"/>
+  <line x1="195" y1="97.7" x2="155" y2="113" stroke="#7c5ff5" stroke-width="1" opacity="0.1"/>
+  <line x1="161" y1="186" x2="139" y2="148" stroke="#8d72f7" stroke-width="1" opacity="0.1"/>
+  <line x1="79" y1="186" x2="101" y2="148" stroke="#9580ff" stroke-width="1" opacity="0.1"/>
+  <line x1="45" y1="97.7" x2="85" y2="113" stroke="#9580ff" stroke-width="1" opacity="0.08"/>
+
+  <!-- Coin stack -->
+  <ellipse cx="120" cy="133" rx="22" ry="7" fill="#000" opacity="0.35"/>
+  <path d="M 98 126 Q 120 130 142 126 L 142 132 Q 120 136 98 132 Z" fill="url(#coin-side)"/>
+  <ellipse cx="120" cy="126" rx="22" ry="7" fill="#c9960c"/>
+  <ellipse cx="120" cy="126" rx="18" ry="5.5" fill="#d4a800" opacity="0.6"/>
+  <path d="M 99 118 Q 120 122 141 118 L 141 124 Q 120 128 99 124 Z" fill="url(#coin-side)"/>
+  <ellipse cx="120" cy="118" rx="21" ry="6.5" fill="#d4a017"/>
+  <ellipse cx="120" cy="118" rx="17" ry="5" fill="#e0b520" opacity="0.5"/>
+  <path d="M 100 110 Q 120 114 140 110 L 140 116 Q 120 120 100 116 Z" fill="url(#coin-side)"/>
+  <ellipse cx="120" cy="110" rx="20" ry="6" fill="url(#coin-top)"/>
+  <text x="120" y="113" text-anchor="middle" font-family="serif" font-size="8" font-weight="bold" fill="#7a5800" opacity="0.7">XLM</text>
+  <ellipse cx="115" cy="108" rx="6" ry="2" fill="#fff" opacity="0.18" transform="rotate(-15,115,108)"/>
+
+  <!-- ===== WORDMARK ===== -->
+  <g transform="translate(255, 0)">
+    <!-- "Agent" light weight -->
+    <text x="0" y="112" font-family="Inter, -apple-system, sans-serif" font-size="62" font-weight="300" fill="#8888a0" letter-spacing="-1.5">Agent</text>
+    <!-- "Circles" bold with gradient -->
+    <text x="228" y="112" font-family="Inter, -apple-system, sans-serif" font-size="62" font-weight="700" fill="url(#word-grad)" letter-spacing="-1.5">Circles</text>
+
+    <!-- Divider line under wordmark -->
+    <line x1="1" y1="122" x2="563" y2="122" stroke="#2a2a3a" stroke-width="1"/>
+
+    <!-- Tagline -->
+    <text x="2" y="148" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="400" fill="#4a4a5a" letter-spacing="4">ON-CHAIN ROTATING SAVINGS</text>
+
+    <!-- Stellar badge -->
+    <rect x="417" y="158" width="148" height="24" rx="4" fill="#1a1a2a" stroke="#2a2a3a" stroke-width="1"/>
+    <text x="491" y="174" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="11" fill="#4a4a5a" letter-spacing="1">POWERED BY STELLAR</text>
+  </g>
 </svg>

@@ -1,41 +1,134 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
-  <!-- Agent Circles — Icon Mark Only -->
-  <g transform="translate(120, 120)">
-    <!-- Outer rotation arc -->
-    <path d="M 0 -82 A 82 82 0 1 1 -71 41" stroke="url(#arc-g)" stroke-width="6" stroke-linecap="round" fill="none"/>
-    <polygon points="-71,41 -59,27 -79,25" fill="#4f8ff7"/>
-
-    <!-- 5 member nodes -->
-    <circle cx="0" cy="-82" r="16" fill="#4f8ff7"/>
-    <circle cx="0" cy="-82" r="8" fill="#0a0a0c"/>
-
-    <circle cx="78" cy="-25.3" r="13" fill="#9580ff" opacity="0.85"/>
-    <circle cx="78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
-
-    <circle cx="48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.7"/>
-    <circle cx="48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
-
-    <circle cx="-48.2" cy="66.3" r="13" fill="#9580ff" opacity="0.55"/>
-    <circle cx="-48.2" cy="66.3" r="6.5" fill="#0a0a0c"/>
-
-    <circle cx="-78" cy="-25.3" r="13" fill="#9580ff" opacity="0.4"/>
-    <circle cx="-78" cy="-25.3" r="6.5" fill="#0a0a0c"/>
-
-    <!-- Inner connections -->
-    <line x1="0" y1="-82" x2="78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="78" y1="-25.3" x2="48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="48.2" y1="66.3" x2="-48.2" y2="66.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="-48.2" y1="66.3" x2="-78" y2="-25.3" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-    <line x1="-78" y1="-25.3" x2="0" y2="-82" stroke="#4f8ff7" stroke-width="1.5" opacity="0.15"/>
-
-    <!-- Center pot -->
-    <circle cx="0" cy="0" r="7" fill="#3ecf8e" opacity="0.9"/>
-  </g>
-
   <defs>
-    <linearGradient id="arc-g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Outer ring gradient -->
+    <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4f8ff7"/>
+      <stop offset="60%" stop-color="#7c5ff5"/>
       <stop offset="100%" stop-color="#9580ff"/>
     </linearGradient>
+
+    <!-- Active node glow -->
+    <radialGradient id="active-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4f8ff7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4f8ff7" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Coin top face -->
+    <radialGradient id="coin-top" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ffe97a"/>
+      <stop offset="50%" stop-color="#f5c518"/>
+      <stop offset="100%" stop-color="#c9960c"/>
+    </radialGradient>
+
+    <!-- Coin side -->
+    <linearGradient id="coin-side" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d4a017"/>
+      <stop offset="100%" stop-color="#7a5800"/>
+    </linearGradient>
+
+    <!-- Card shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Glow filter for active node -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
+
+  <!-- Dark background circle -->
+  <circle cx="120" cy="120" r="115" fill="#0d0d14"/>
+  <circle cx="120" cy="120" r="115" fill="url(#ring-bg)" stroke="#1e1e2e" stroke-width="1.5"/>
+
+  <!-- Outer ring track -->
+  <circle cx="120" cy="120" r="88" stroke="#1e1e2e" stroke-width="2" fill="none"/>
+
+  <!-- Rotating arc (the ROSCA flow) — ~300deg arc -->
+  <path d="M 120 32 A 88 88 0 1 1 47 186" stroke="url(#ring-grad)" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+  <!-- Arrow head at arc end -->
+  <g transform="translate(47,186) rotate(220)">
+    <polygon points="0,-9 7,5 -7,5" fill="#9580ff"/>
+  </g>
+
+  <!-- ===== PERSON NODES ===== -->
+  <!-- Node 1 — TOP — active recipient, highlighted blue, with glow -->
+  <g transform="translate(120, 32)" filter="url(#glow)">
+    <!-- Glow ring -->
+    <circle r="22" fill="url(#active-glow)"/>
+    <!-- Avatar bg -->
+    <circle r="15" fill="#1a2a4a" stroke="#4f8ff7" stroke-width="2.5"/>
+    <!-- Head -->
+    <circle cy="-4" r="5" fill="#4f8ff7"/>
+    <!-- Body arc (shoulders) -->
+    <path d="M -6 6 Q 0 2 6 6 Q 6 12 0 12 Q -6 12 -6 6Z" fill="#4f8ff7" opacity="0.9"/>
+    <!-- Small crown/star indicator -->
+    <text y="-14" text-anchor="middle" font-size="8" fill="#ffe97a">★</text>
+  </g>
+
+  <!-- Node 2 — RIGHT TOP -->
+  <g transform="translate(208, 97.7)">
+    <circle r="13" fill="#1a1a2e" stroke="#7c5ff5" stroke-width="2" opacity="0.9"/>
+    <circle cy="-3.5" r="4.5" fill="#7c5ff5" opacity="0.85"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#7c5ff5" opacity="0.75"/>
+  </g>
+
+  <!-- Node 3 — RIGHT BOTTOM -->
+  <g transform="translate(174.2, 186.3)">
+    <circle r="13" fill="#1a1a2e" stroke="#8d72f7" stroke-width="2" opacity="0.75"/>
+    <circle cy="-3.5" r="4.5" fill="#8d72f7" opacity="0.7"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#8d72f7" opacity="0.6"/>
+  </g>
+
+  <!-- Node 4 — LEFT BOTTOM -->
+  <g transform="translate(65.8, 186.3)">
+    <circle r="13" fill="#1a1a2e" stroke="#9580ff" stroke-width="2" opacity="0.6"/>
+    <circle cy="-3.5" r="4.5" fill="#9580ff" opacity="0.55"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#9580ff" opacity="0.45"/>
+  </g>
+
+  <!-- Node 5 — LEFT TOP -->
+  <g transform="translate(32, 97.7)">
+    <circle r="13" fill="#1a1a2e" stroke="#9580ff" stroke-width="2" opacity="0.45"/>
+    <circle cy="-3.5" r="4.5" fill="#9580ff" opacity="0.4"/>
+    <path d="M -5.5 5 Q 0 1.5 5.5 5 Q 5.5 10.5 0 10.5 Q -5.5 10.5 -5.5 5Z" fill="#9580ff" opacity="0.3"/>
+  </g>
+
+  <!-- Subtle spoke lines from each node toward center -->
+  <line x1="120" y1="47" x2="120" y2="95" stroke="#4f8ff7" stroke-width="1" opacity="0.12"/>
+  <line x1="195" y1="97.7" x2="155" y2="113" stroke="#7c5ff5" stroke-width="1" opacity="0.1"/>
+  <line x1="161" y1="186" x2="139" y2="148" stroke="#8d72f7" stroke-width="1" opacity="0.1"/>
+  <line x1="79" y1="186" x2="101" y2="148" stroke="#9580ff" stroke-width="1" opacity="0.1"/>
+  <line x1="45" y1="97.7" x2="85" y2="113" stroke="#9580ff" stroke-width="1" opacity="0.08"/>
+
+  <!-- ===== CENTER COIN STACK (the "pot") ===== -->
+  <!-- Shadow -->
+  <ellipse cx="120" cy="133" rx="22" ry="7" fill="#000" opacity="0.35"/>
+
+  <!-- Coin 3 (bottom) side -->
+  <path d="M 98 126 Q 120 130 142 126 L 142 132 Q 120 136 98 132 Z" fill="url(#coin-side)"/>
+  <!-- Coin 3 top -->
+  <ellipse cx="120" cy="126" rx="22" ry="7" fill="#c9960c"/>
+  <ellipse cx="120" cy="126" rx="18" ry="5.5" fill="#d4a800" opacity="0.6"/>
+
+  <!-- Coin 2 (middle) side -->
+  <path d="M 99 118 Q 120 122 141 118 L 141 124 Q 120 128 99 124 Z" fill="url(#coin-side)"/>
+  <!-- Coin 2 top -->
+  <ellipse cx="120" cy="118" rx="21" ry="6.5" fill="#d4a017"/>
+  <ellipse cx="120" cy="118" rx="17" ry="5" fill="#e0b520" opacity="0.5"/>
+
+  <!-- Coin 1 (top) side -->
+  <path d="M 100 110 Q 120 114 140 110 L 140 116 Q 120 120 100 116 Z" fill="url(#coin-side)"/>
+  <!-- Coin 1 top face with highlight -->
+  <ellipse cx="120" cy="110" rx="20" ry="6" fill="url(#coin-top)"/>
+  <!-- XLM / star symbol on top coin -->
+  <text x="120" y="113" text-anchor="middle" font-family="serif" font-size="8" font-weight="bold" fill="#7a5800" opacity="0.7">XLM</text>
+
+  <!-- Coin shine -->
+  <ellipse cx="115" cy="108" rx="6" ry="2" fill="#fff" opacity="0.18" transform="rotate(-15,115,108)"/>
 </svg>
