@@ -38,7 +38,7 @@ impl RoscaPool {
         if round_period == 0 {
             return Err(RoscaError::InvalidParam);
         }
-        if max_members < 2 {
+        if max_members < 2 || max_members > 100 {
             return Err(RoscaError::InvalidParam);
         }
 
@@ -145,10 +145,13 @@ impl RoscaPool {
         storage::set_round_deposit(&env, round, &member, config.contribution_amount);
 
         let prev_total = storage::get_total_contributed(&env, &member);
-        storage::set_total_contributed(&env, &member, prev_total + config.contribution_amount);
+        let new_total = prev_total
+            .checked_add(config.contribution_amount)
+            .ok_or(RoscaError::Overflow)?;
+        storage::set_total_contributed(&env, &member, new_total);
 
         let count = storage::get_contrib_count(&env);
-        storage::set_contrib_count(&env, count + 1);
+        storage::set_contrib_count(&env, count.checked_add(1).ok_or(RoscaError::Overflow)?);
 
         storage::bump_instance_ttl(&env);
 
@@ -164,7 +167,11 @@ impl RoscaPool {
         Ok(())
     }
 
-    /// Advance to next round and trigger payout. Permissionless.
+    /// Advance to next round and trigger payout.
+    /// Permissionless by design: anyone can trigger advancement once conditions are met
+    /// (all members contributed AND round period elapsed). The current-round recipient
+    /// can front-run this call, which is acceptable — they would receive their rightful
+    /// payout regardless of who calls it.
     pub fn advance_round(env: Env) -> Result<(), RoscaError> {
         let state = storage::get_state(&env);
         if state != RoscaState::Active {
@@ -188,11 +195,17 @@ impl RoscaPool {
             return Err(RoscaError::RoundNotElapsed);
         }
 
-        // Calculate payout
+        // Calculate payout — checked arithmetic for all financial math
         let num_members = members.len() as i128;
-        let total_pot = config.contribution_amount * num_members;
-        let fee = total_pot * (config.manager_fee_bps as i128) / 10_000;
-        let net_payout = total_pot - fee;
+        let total_pot = config
+            .contribution_amount
+            .checked_mul(num_members)
+            .ok_or(RoscaError::Overflow)?;
+        let fee = total_pot
+            .checked_mul(config.manager_fee_bps as i128)
+            .ok_or(RoscaError::Overflow)?
+            / 10_000;
+        let net_payout = total_pot.checked_sub(fee).ok_or(RoscaError::Overflow)?;
 
         // Recipient is members[round] (fixed rotation order)
         let recipient = members.get(round).unwrap();
@@ -203,11 +216,13 @@ impl RoscaPool {
         storage::set_has_received(&env, &recipient, true);
         storage::set_manager_fee_paid(&env, round, fee);
 
-        let next_round = round + 1;
+        let next_round = round.checked_add(1).ok_or(RoscaError::Overflow)?;
         storage::set_current_round(&env, next_round);
         storage::set_contrib_count(&env, 0); // reset for next round
 
-        let new_total_fees = storage::get_total_manager_fees(&env) + fee;
+        let new_total_fees = storage::get_total_manager_fees(&env)
+            .checked_add(fee)
+            .ok_or(RoscaError::Overflow)?;
         storage::set_total_manager_fees(&env, new_total_fees);
 
         if next_round >= members.len() {
@@ -268,7 +283,10 @@ impl RoscaPool {
         if vault_balance > 0 {
             let mut total_all_contributed: i128 = 0;
             for i in 0..members.len() {
-                total_all_contributed += storage::get_total_contributed(&env, &members.get(i).unwrap());
+                let c = storage::get_total_contributed(&env, &members.get(i).unwrap());
+                total_all_contributed = total_all_contributed
+                    .checked_add(c)
+                    .ok_or(RoscaError::Overflow)?;
             }
 
             if total_all_contributed > 0 {
@@ -276,7 +294,12 @@ impl RoscaPool {
                     let member = members.get(i).unwrap();
                     let member_contributed = storage::get_total_contributed(&env, &member);
                     if member_contributed > 0 {
-                        let refund = (vault_balance * member_contributed) / total_all_contributed;
+                        // vault_balance * member_contributed may overflow i128 for very large pools;
+                        // max_members=100, max contribution fits well within i128 range.
+                        let refund = vault_balance
+                            .checked_mul(member_contributed)
+                            .ok_or(RoscaError::Overflow)?
+                            / total_all_contributed;
                         if refund > 0 {
                             token_client.transfer(&env.current_contract_address(), &member, &refund);
                         }

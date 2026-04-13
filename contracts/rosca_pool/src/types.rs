@@ -18,6 +18,7 @@ pub enum RoscaError {
     InsufficientBalance = 12,
     MemberLimitExceeded = 13,
     InvalidParam = 14,
+    Overflow = 15,
 }
 
 #[contracttype]

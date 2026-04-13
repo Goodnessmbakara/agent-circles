@@ -95,9 +95,14 @@ pub fn set_member_position(env: &Env, member: &Address, pos: u32) {
 }
 
 /// Returns Some(slot_index) if member is in the pool, None otherwise.
+/// Also refreshes TTL on read so active members' entries don't expire.
 pub fn get_member_position(env: &Env, member: &Address) -> Option<u32> {
     let key = DataKey::MemberPosition(member.clone());
-    env.storage().persistent().get(&key)
+    let val: Option<u32> = env.storage().persistent().get(&key);
+    if val.is_some() {
+        env.storage().persistent().extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    }
+    val
 }
 
 pub fn set_round_deposit(env: &Env, round: u32, member: &Address, amount: i128) {
@@ -119,7 +124,11 @@ pub fn set_has_received(env: &Env, member: &Address, received: bool) {
 
 pub fn get_has_received(env: &Env, member: &Address) -> bool {
     let key = DataKey::HasReceived(member.clone());
-    env.storage().persistent().get(&key).unwrap_or(false)
+    let val: Option<bool> = env.storage().persistent().get(&key);
+    if val.is_some() {
+        env.storage().persistent().extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    }
+    val.unwrap_or(false)
 }
 
 pub fn set_total_contributed(env: &Env, member: &Address, total: i128) {
