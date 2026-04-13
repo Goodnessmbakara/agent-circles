@@ -17,6 +17,7 @@ pub enum RoscaError {
     FeeTooHigh = 11,
     InsufficientBalance = 12,
     MemberLimitExceeded = 13,
+    InvalidParam = 14,
 }
 
 #[contracttype]
@@ -56,6 +57,9 @@ pub enum DataKey {
     CurrentRound,
     Members,
     Manager,
+    ContribCount,       // instance: contributions recorded in current round
+    TotalManagerFees,   // instance: cumulative manager fees paid out
+    MemberPosition(Address),  // persistent: member address -> slot index (O(1) lookup)
     RoundDeposit(u32, Address),
     HasReceived(Address),
     TotalContributed(Address),

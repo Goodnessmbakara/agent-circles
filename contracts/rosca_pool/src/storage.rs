@@ -67,7 +67,38 @@ pub fn has_initialized(env: &Env) -> bool {
     env.storage().instance().has(&DataKey::Admin)
 }
 
+/// Contributions recorded for the current round (O(1) completeness check).
+pub fn set_contrib_count(env: &Env, count: u32) {
+    env.storage().instance().set(&DataKey::ContribCount, &count);
+}
+
+pub fn get_contrib_count(env: &Env) -> u32 {
+    env.storage().instance().get(&DataKey::ContribCount).unwrap_or(0)
+}
+
+/// Cumulative manager fees paid across all rounds (O(1) aggregate read).
+pub fn set_total_manager_fees(env: &Env, total: i128) {
+    env.storage().instance().set(&DataKey::TotalManagerFees, &total);
+}
+
+pub fn get_total_manager_fees(env: &Env) -> i128 {
+    env.storage().instance().get(&DataKey::TotalManagerFees).unwrap_or(0)
+}
+
 // --- Persistent storage ---
+
+/// Map member address -> slot index. Enables O(1) membership and duplicate checks.
+pub fn set_member_position(env: &Env, member: &Address, pos: u32) {
+    let key = DataKey::MemberPosition(member.clone());
+    env.storage().persistent().set(&key, &pos);
+    env.storage().persistent().extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+}
+
+/// Returns Some(slot_index) if member is in the pool, None otherwise.
+pub fn get_member_position(env: &Env, member: &Address) -> Option<u32> {
+    let key = DataKey::MemberPosition(member.clone());
+    env.storage().persistent().get(&key)
+}
 
 pub fn set_round_deposit(env: &Env, round: u32, member: &Address, amount: i128) {
     let key = DataKey::RoundDeposit(round, member.clone());
@@ -112,11 +143,6 @@ pub fn set_manager_fee_paid(env: &Env, round: u32, amount: i128) {
     let key = DataKey::ManagerFeePaid(round);
     env.storage().persistent().set(&key, &amount);
     env.storage().persistent().extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-}
-
-pub fn get_manager_fee_paid(env: &Env, round: u32) -> i128 {
-    let key = DataKey::ManagerFeePaid(round);
-    env.storage().persistent().get(&key).unwrap_or(0)
 }
 
 // --- TTL management ---

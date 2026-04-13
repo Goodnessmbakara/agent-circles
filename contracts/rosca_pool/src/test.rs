@@ -89,6 +89,57 @@ fn test_initialize() {
 }
 
 #[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_initialize_zero_contribution() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let manager = Address::generate(&env);
+    let (token_address, _, _) = setup_token(&env, &admin);
+    let (client, _) = setup_contract(&env);
+    client.initialize(&admin, &token_address, &0_i128, &60_u64, &5_u32, &manager, &200_u32);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_initialize_zero_period() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let manager = Address::generate(&env);
+    let (token_address, _, _) = setup_token(&env, &admin);
+    let (client, _) = setup_contract(&env);
+    client.initialize(&admin, &token_address, &1_000_000_i128, &0_u64, &5_u32, &manager, &200_u32);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_initialize_single_member() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let manager = Address::generate(&env);
+    let (token_address, _, _) = setup_token(&env, &admin);
+    let (client, _) = setup_contract(&env);
+    client.initialize(&admin, &token_address, &1_000_000_i128, &60_u64, &1_u32, &manager, &200_u32);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #6)")]
+fn test_decommission_already_cancelled() {
+    let env = Env::default();
+    env.mock_all_auths();
+    env.ledger().with_mut(|li| { li.timestamp = 1000; });
+    let admin = Address::generate(&env);
+    let manager = Address::generate(&env);
+    let (token_address, _, token_admin) = setup_token(&env, &admin);
+    let (client, _) = setup_contract(&env);
+    create_active_pool(&env, &client, &token_admin, &admin, &token_address, &manager, 3, 1_000_000);
+    client.decommission(&admin);
+    client.decommission(&admin); // second call on Cancelled pool, should fail
+}
+
+#[test]
 #[should_panic(expected = "Error(Contract, #11)")]
 fn test_initialize_fee_too_high() {
     let env = Env::default();

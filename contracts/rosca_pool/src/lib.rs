@@ -28,8 +28,18 @@ impl RoscaPool {
         if storage::has_initialized(&env) {
             return Err(RoscaError::AlreadyInitialized);
         }
+        // Input validation
         if manager_fee_bps > 500 {
             return Err(RoscaError::FeeTooHigh);
+        }
+        if contribution_amount <= 0 {
+            return Err(RoscaError::InvalidParam);
+        }
+        if round_period == 0 {
+            return Err(RoscaError::InvalidParam);
+        }
+        if max_members < 2 {
+            return Err(RoscaError::InvalidParam);
         }
 
         admin.require_auth();
@@ -40,6 +50,8 @@ impl RoscaPool {
         storage::set_state(&env, &RoscaState::Setup);
         storage::set_current_round(&env, 0);
         storage::set_members(&env, &Vec::new(&env));
+        storage::set_contrib_count(&env, 0);
+        storage::set_total_manager_fees(&env, 0);
 
         let config = RoscaConfig {
             contribution_amount,
@@ -76,16 +88,15 @@ impl RoscaPool {
             return Err(RoscaError::PoolFull);
         }
 
-        // Check duplicate
-        for i in 0..members.len() {
-            if members.get(i).unwrap() == member {
-                return Err(RoscaError::AlreadyMember);
-            }
+        // O(1) duplicate check via persistent position map
+        if storage::get_member_position(&env, &member).is_some() {
+            return Err(RoscaError::AlreadyMember);
         }
 
         let position = members.len();
         members.push_back(member.clone());
         storage::set_members(&env, &members);
+        storage::set_member_position(&env, &member, position);
 
         env.events().publish(
             (symbol_short!("member"), symbol_short!("joined")),
@@ -94,10 +105,10 @@ impl RoscaPool {
 
         // Activate if full
         if members.len() == config.max_members {
-            storage::set_state(&env, &RoscaState::Active);
             let mut config = config;
             config.start_time = env.ledger().timestamp();
             storage::set_config(&env, &config);
+            storage::set_state(&env, &RoscaState::Active);
 
             env.events().publish(
                 (symbol_short!("state"),),
@@ -118,42 +129,37 @@ impl RoscaPool {
 
         member.require_auth();
 
-        let members = storage::get_members(&env);
-        let mut is_member = false;
-        for i in 0..members.len() {
-            if members.get(i).unwrap() == member {
-                is_member = true;
-                break;
-            }
-        }
-        if !is_member {
+        // O(1) membership check via position map
+        if storage::get_member_position(&env, &member).is_none() {
             return Err(RoscaError::NotMember);
         }
 
         let round = storage::get_current_round(&env);
         let config = storage::get_config(&env);
 
-        // Check not already contributed this round
         if storage::get_round_deposit(&env, round, &member) > 0 {
             return Err(RoscaError::AlreadyContributed);
         }
 
-        // Transfer tokens from member to contract vault
-        let token_client = token::Client::new(&env, &storage::get_token(&env));
-        token_client.transfer(&member, &env.current_contract_address(), &config.contribution_amount);
-
-        // Record contribution
+        // CEI: update all state before external call
         storage::set_round_deposit(&env, round, &member, config.contribution_amount);
 
         let prev_total = storage::get_total_contributed(&env, &member);
         storage::set_total_contributed(&env, &member, prev_total + config.contribution_amount);
 
+        let count = storage::get_contrib_count(&env);
+        storage::set_contrib_count(&env, count + 1);
+
         storage::bump_instance_ttl(&env);
 
         env.events().publish(
             (symbol_short!("contrib"),),
-            (member, round, config.contribution_amount),
+            (member.clone(), round, config.contribution_amount),
         );
+
+        // Interaction last: pull tokens into vault
+        let token_client = token::Client::new(&env, &storage::get_token(&env));
+        token_client.transfer(&member, &env.current_contract_address(), &config.contribution_amount);
 
         Ok(())
     }
@@ -169,15 +175,13 @@ impl RoscaPool {
         let round = storage::get_current_round(&env);
         let members = storage::get_members(&env);
 
-        // Check all members contributed this round
-        for i in 0..members.len() {
-            let member = members.get(i).unwrap();
-            if storage::get_round_deposit(&env, round, &member) <= 0 {
-                return Err(RoscaError::RoundNotComplete);
-            }
+        // O(1) completeness check via instance counter
+        let contrib_count = storage::get_contrib_count(&env);
+        if contrib_count < members.len() {
+            return Err(RoscaError::RoundNotComplete);
         }
 
-        // Check time elapsed
+        // Time gate
         let now = env.ledger().timestamp();
         let round_end = config.start_time + (config.round_period * (round as u64 + 1));
         if now < round_end {
@@ -192,26 +196,19 @@ impl RoscaPool {
 
         // Recipient is members[round] (fixed rotation order)
         let recipient = members.get(round).unwrap();
+        let manager = storage::get_manager(&env);
 
-        let token_client = token::Client::new(&env, &storage::get_token(&env));
-
-        // Pay recipient
-        token_client.transfer(&env.current_contract_address(), &recipient, &net_payout);
-
-        // Pay manager fee
-        if fee > 0 {
-            let manager = storage::get_manager(&env);
-            token_client.transfer(&env.current_contract_address(), &manager, &fee);
-        }
-
-        // Record
+        // CEI: update all state before external calls
         storage::set_round_recipient(&env, round, &recipient);
         storage::set_has_received(&env, &recipient, true);
         storage::set_manager_fee_paid(&env, round, fee);
 
-        // Advance round
         let next_round = round + 1;
         storage::set_current_round(&env, next_round);
+        storage::set_contrib_count(&env, 0); // reset for next round
+
+        let new_total_fees = storage::get_total_manager_fees(&env) + fee;
+        storage::set_total_manager_fees(&env, new_total_fees);
 
         if next_round >= members.len() {
             storage::set_state(&env, &RoscaState::Completed);
@@ -225,8 +222,15 @@ impl RoscaPool {
 
         env.events().publish(
             (symbol_short!("payout"),),
-            (recipient, round, net_payout, fee),
+            (recipient.clone(), round, net_payout, fee),
         );
+
+        // Interactions last: push tokens out of vault
+        let token_client = token::Client::new(&env, &storage::get_token(&env));
+        token_client.transfer(&env.current_contract_address(), &recipient, &net_payout);
+        if fee > 0 {
+            token_client.transfer(&env.current_contract_address(), &manager, &fee);
+        }
 
         Ok(())
     }
@@ -234,22 +238,33 @@ impl RoscaPool {
     /// Emergency cancellation — admin only.
     pub fn decommission(env: Env, admin: Address) -> Result<(), RoscaError> {
         let state = storage::get_state(&env);
-        if state == RoscaState::Completed {
+        // Guard both terminal states: Completed and already-Cancelled
+        if state == RoscaState::Completed || state == RoscaState::Cancelled {
             return Err(RoscaError::WrongState);
         }
 
-        admin.require_auth();
-
+        // Verify caller is the stored admin BEFORE calling require_auth
         let stored_admin = storage::get_admin(&env);
         if admin != stored_admin {
             return Err(RoscaError::NotAdmin);
         }
+        admin.require_auth();
 
         let members = storage::get_members(&env);
         let token_client = token::Client::new(&env, &storage::get_token(&env));
 
-        // Return funds pro-rata based on total_contributed
         let vault_balance = token_client.balance(&env.current_contract_address());
+
+        // CEI: mark cancelled before any refund transfers
+        storage::set_state(&env, &RoscaState::Cancelled);
+        storage::bump_instance_ttl(&env);
+
+        env.events().publish(
+            (symbol_short!("state"),),
+            (state, RoscaState::Cancelled),
+        );
+
+        // Interactions: pro-rata refunds based on each member's total_contributed
         if vault_balance > 0 {
             let mut total_all_contributed: i128 = 0;
             for i in 0..members.len() {
@@ -269,14 +284,6 @@ impl RoscaPool {
                 }
             }
         }
-
-        storage::set_state(&env, &RoscaState::Cancelled);
-        storage::bump_instance_ttl(&env);
-
-        env.events().publish(
-            (symbol_short!("state"),),
-            (state, RoscaState::Cancelled),
-        );
 
         Ok(())
     }
@@ -324,12 +331,8 @@ impl RoscaPool {
         }
     }
 
+    /// O(1) aggregate read from cached instance storage.
     pub fn get_manager_fees(env: Env) -> i128 {
-        let round = storage::get_current_round(&env);
-        let mut total: i128 = 0;
-        for r in 0..round {
-            total += storage::get_manager_fee_paid(&env, r);
-        }
-        total
+        storage::get_total_manager_fees(&env)
     }
 }
