@@ -83,4 +83,13 @@ export const api = {
     request<TxSubmitResult>("/tx/submit", { method: "POST", body: JSON.stringify({ signed_xdr: signedXdr }) }),
   getTxStatus: (hash: string) =>
     request<{ status: string; ledger?: number }>(`/tx/${hash}`),
+  agentChat: (messages: { role: "user" | "assistant"; content: string }[], walletAddress?: string) =>
+    request<{ reply: string }>("/agent/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages, walletAddress }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(walletAddress ? { "x-wallet-address": walletAddress } : {}),
+      },
+    }),
 };

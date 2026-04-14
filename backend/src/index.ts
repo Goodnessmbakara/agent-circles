@@ -5,6 +5,7 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { poolRoutes } from "./routes/pools.js";
 import { txRoutes } from "./routes/tx.js";
 import { agentRoutes } from "./routes/agent.js";
+import { demoRoutes } from "./routes/demo.js";
 import { startKeeper } from "./services/keeper.js";
 
 const app = Fastify({ logger: true });
@@ -16,6 +17,7 @@ app.setErrorHandler(errorHandler);
 await app.register(poolRoutes, { prefix: "/api" });
 await app.register(txRoutes, { prefix: "/api" });
 await app.register(agentRoutes, { prefix: "/api" });
+await app.register(demoRoutes, { prefix: "/api" });
 
 app.get("/health", async () => ({ status: "ok" }));
 

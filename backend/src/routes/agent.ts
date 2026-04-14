@@ -4,6 +4,17 @@ import { config } from "../config.js";
 import * as reminders from "../store/reminder-queue.js";
 import { getManagerFees } from "../stellar/pool-reader.js";
 import * as registry from "../store/pool-registry.js";
+import { runAgentChat } from "../agent/chat-handler.js";
+
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(2000),
+});
+
+const ChatSchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1).max(20),
+  walletAddress: z.string().optional(),
+});
 
 const RemindSchema = z.object({
   contract_id: z.string(),
@@ -13,6 +24,23 @@ const RemindSchema = z.object({
 });
 
 export async function agentRoutes(app: FastifyInstance) {
+  // Claude agent chat — agentic loop with tool use
+  app.post("/agent/chat", async (request, reply) => {
+    if (!config.claudeApiKey) {
+      return reply.status(503).send({ error: "Claude API key is not configured" });
+    }
+
+    const body = ChatSchema.parse(request.body);
+    const walletAddress =
+      body.walletAddress ??
+      (typeof request.headers["x-wallet-address"] === "string"
+        ? request.headers["x-wallet-address"]
+        : undefined);
+
+    const reply_text = await runAgentChat(body.messages, { walletAddress });
+    return { reply: reply_text };
+  });
+
   // Schedule a contribution reminder for a member
   app.post("/agent/remind", async (request) => {
     const body = RemindSchema.parse(request.body);

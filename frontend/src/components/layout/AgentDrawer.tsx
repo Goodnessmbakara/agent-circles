@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ChatMessage } from "../chat/ChatMessage";
 import { ChatInput } from "../chat/ChatInput";
+import { api } from "../../lib/api";
+import { useWalletStore } from "../../stores/wallet-store";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,14 +14,15 @@ interface AgentDrawerProps {
   onClose: () => void;
 }
 
+const WELCOME: Message = {
+  role: "assistant",
+  content:
+    "Hi! I'm your Agent Circles assistant. I can check pool status, show your positions, schedule reminders, and explain how savings circles work. What would you like to know?",
+};
+
 export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm your Agent Circles assistant. I can help you create pools, check your status, contribute, and explain how savings circles work. What would you like to do?",
-    },
-  ]);
+  const { address } = useWalletStore();
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,21 +32,22 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
 
   async function handleSend(text: string) {
     const userMsg: Message = { role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    const history = [...messages, userMsg];
+    setMessages(history);
     setLoading(true);
 
+    // Send full history (excluding welcome) to the agent
+    const chatHistory = history.filter((m) => m !== WELCOME);
+
     try {
-      // TODO: Wire to backend agent endpoint (Phase 4)
-      const assistantMsg: Message = {
-        role: "assistant",
-        content: `I received your message: "${text}". Agent integration coming in Phase 4.`,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Sorry, something went wrong." },
-      ]);
+      const { reply } = await api.agentChat(chatHistory, address ?? undefined);
+      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Something went wrong. Please try again.";
+      setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
     } finally {
       setLoading(false);
     }
