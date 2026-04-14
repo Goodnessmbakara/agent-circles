@@ -1,7 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: #09090b;
+    color: #fafafa;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+  /* Selection */
+  ::selection { background: rgba(99,102,241,0.3); color: #fff; }
+
+  /* Focus ring */
+  :focus-visible {
+    outline: 2px solid rgba(99,102,241,0.6);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* ── Cards ── */
+  .card {
+    @apply bg-[#111113] rounded-2xl border border-white/[0.07] shadow-card transition-all duration-200;
+  }
+  .card-hover {
+    @apply hover:border-white/[0.14] hover:shadow-card-hover hover:-translate-y-px;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-gradient-cta text-white font-medium text-sm
+           hover:brightness-110 active:scale-[0.98]
+           transition-all duration-150 cursor-pointer
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-white/[0.06] border border-white/[0.10] text-zinc-200 font-medium text-sm
+           hover:bg-white/[0.10] hover:border-white/[0.16] active:scale-[0.98]
+           transition-all duration-150 cursor-pointer
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-red-500/10 border border-red-500/20 text-red-400 font-medium text-sm
+           hover:bg-red-500/20 active:scale-[0.98]
+           transition-all duration-150 cursor-pointer;
+  }
+
+  /* ── Form inputs ── */
+  .input {
+    @apply w-full bg-[#111113] border border-white/[0.08] rounded-xl
+           px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600
+           focus:outline-none focus:border-brand-500/60 focus:ring-0
+           transition-colors duration-150;
+  }
+  .select {
+    @apply input appearance-none;
+  }
+  .label {
+    @apply block text-xs font-medium text-zinc-400 mb-1.5 tracking-wide uppercase;
+  }
+
+  /* ── Status badges ── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border;
+  }
+  .badge-setup {
+    @apply badge bg-amber-500/10 text-amber-400 border-amber-500/20;
+  }
+  .badge-active {
+    @apply badge bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+  }
+  .badge-completed {
+    @apply badge bg-brand-500/10 text-brand-400 border-brand-500/20;
+  }
+  .badge-cancelled {
+    @apply badge bg-red-500/10 text-red-400 border-red-500/20;
+  }
+
+  /* ── Stat tiles ── */
+  .stat-tile {
+    @apply bg-[#111113] border border-white/[0.07] rounded-xl p-4;
+  }
+  .stat-label {
+    @apply text-xs text-zinc-500 font-medium uppercase tracking-wide;
+  }
+  .stat-value {
+    @apply text-2xl font-bold text-zinc-50 tabular-nums mt-1;
+  }
+  .stat-sub {
+    @apply text-xs text-zinc-500 mt-0.5;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    @apply h-px bg-white/[0.07] my-6;
+  }
+
+  /* ── Amount display ── */
+  .amount-lg {
+    @apply text-3xl font-bold tabular-nums text-zinc-50;
+  }
+  .amount-sm {
+    @apply text-lg font-semibold tabular-nums text-zinc-100;
+  }
 }

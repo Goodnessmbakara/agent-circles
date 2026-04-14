@@ -22,9 +22,11 @@ export function RoundCountdown({ startTime, roundPeriod, currentRound }: RoundCo
   }, [startTime, roundPeriod, currentRound]);
 
   return (
-    <div className="text-center">
-      <p className="text-gray-400 text-sm">Round ends in</p>
-      <p className="text-3xl font-bold font-mono">{formatCountdown(secondsLeft)}</p>
+    <div className="stat-tile text-center min-w-[120px]">
+      <p className="stat-label">Round ends in</p>
+      <p className="text-2xl font-bold font-mono tabular-nums text-zinc-50 mt-1">
+        {formatCountdown(secondsLeft)}
+      </p>
     </div>
   );
 }

@@ -10,7 +10,6 @@ import {
 export function ConnectButton() {
   const { address, connected, connect, disconnect } = useWalletStore();
 
-  // Initialize kit and subscribe to state changes once
   useEffect(() => {
     initWalletKit();
     const unsubscribe = StellarWalletsKit.on(KitEventType.STATE_UPDATED, async () => {
@@ -46,12 +45,13 @@ export function ConnectButton() {
   if (connected && address) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm font-mono bg-gray-800 px-3 py-1 rounded">
-          {shortenAddress(address)}
-        </span>
+        <div className="flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-lg px-3 py-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+          <span className="text-xs font-mono text-zinc-300">{shortenAddress(address)}</span>
+        </div>
         <button
           onClick={handleDisconnect}
-          className="text-sm text-gray-400 hover:text-white"
+          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 cursor-pointer"
         >
           Disconnect
         </button>
@@ -60,10 +60,7 @@ export function ConnectButton() {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-lg font-medium"
-    >
+    <button onClick={handleConnect} className="btn-primary text-xs px-4 py-2 cursor-pointer">
       Connect Wallet
     </button>
   );
