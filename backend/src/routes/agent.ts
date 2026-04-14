@@ -26,8 +26,18 @@ const RemindSchema = z.object({
 export async function agentRoutes(app: FastifyInstance) {
   // Claude agent chat — agentic loop with tool use
   app.post("/agent/chat", async (request, reply) => {
-    if (!config.claudeApiKey) {
-      return reply.status(503).send({ error: "Claude API key is not configured" });
+    const llmReady =
+      config.llmProvider === "bedrock"
+        ? !!(config.awsAccessKeyId || process.env.AWS_PROFILE || process.env.AWS_ROLE_ARN)
+        : !!config.claudeApiKey;
+
+    if (!llmReady) {
+      return reply.status(503).send({
+        error:
+          config.llmProvider === "bedrock"
+            ? "AWS credentials not configured. Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (or use an IAM role) and LLM_PROVIDER=bedrock"
+            : "CLAUDE_API_KEY not configured",
+      });
     }
 
     const body = ChatSchema.parse(request.body);

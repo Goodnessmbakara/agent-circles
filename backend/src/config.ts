@@ -11,6 +11,11 @@ export const config = {
   /** Derived from agentSecretKey at startup; empty string if no key configured. */
   agentPublicKey: derivePublicKey(env("AGENT_SECRET_KEY", "")),
   claudeApiKey: env("CLAUDE_API_KEY", ""),
+  // AWS Bedrock (alternative to direct Anthropic API)
+  llmProvider: env("LLM_PROVIDER", "anthropic") as "anthropic" | "bedrock",
+  awsRegion: env("AWS_REGION", "us-east-1"),
+  awsAccessKeyId: env("AWS_ACCESS_KEY_ID", ""),
+  awsSecretAccessKey: env("AWS_SECRET_ACCESS_KEY", ""),
   port: parseInt(env("PORT", "3001"), 10),
   demoContractId: env("DEMO_CONTRACT_ID", ""),
 } as const;
