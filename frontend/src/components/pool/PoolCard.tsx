@@ -23,7 +23,7 @@ function StatePill({ state }: { state: Pool["state"] }) {
 
 export function PoolCard({ pool }: PoolCardProps) {
   const totalPot = pool.contribution * pool.max_members;
-  const fillPct = Math.round((pool.members.length / pool.max_members) * 100);
+  const fillPct = Math.round((pool.current_round / pool.max_members) * 100);
 
   return (
     <Link
@@ -66,18 +66,21 @@ export function PoolCard({ pool }: PoolCardProps) {
         </div>
       </div>
 
-      {/* Member fill bar */}
+      {/* Round progress bar */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] text-zinc-500 uppercase tracking-wide">Members</span>
+          <span className="text-[11px] text-zinc-500 uppercase tracking-wide">Progress</span>
           <span className="text-[11px] text-zinc-400 tabular-nums">
-            {pool.members.length} / {pool.max_members}
+            Round {pool.current_round} / {pool.max_members}
           </span>
         </div>
         <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-cta transition-all duration-500"
-            style={{ width: `${fillPct}%` }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${fillPct}%`,
+              background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+            }}
           />
         </div>
       </div>
