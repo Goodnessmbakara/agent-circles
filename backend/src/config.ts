@@ -12,6 +12,7 @@ export const config = {
   agentPublicKey: derivePublicKey(env("AGENT_SECRET_KEY", "")),
   claudeApiKey: env("CLAUDE_API_KEY", ""),
   port: parseInt(env("PORT", "3001"), 10),
+  demoContractId: env("DEMO_CONTRACT_ID", ""),
 } as const;
 
 function env(key: string, fallback: string): string {

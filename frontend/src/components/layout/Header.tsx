@@ -116,6 +116,66 @@ export function Header() {
       </header>
 
       <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} />
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-30 md:hidden border-t border-white/[0.06]"
+        style={{ background: "rgba(9,9,11,0.95)", backdropFilter: "blur(20px)" }}
+      >
+        <div className="flex items-stretch h-16">
+          {/* Pools tab */}
+          <Link
+            to="/pools"
+            className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors ${
+              isActive("/pools") ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="6"  cy="6"  r="3" stroke="currentColor" strokeWidth="1.4"/>
+              <circle cx="14" cy="6"  r="3" stroke="currentColor" strokeWidth="1.4"/>
+              <circle cx="6"  cy="14" r="3" stroke="currentColor" strokeWidth="1.4"/>
+              <circle cx="14" cy="14" r="3" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+            Pools
+          </Link>
+
+          {/* Demo tab */}
+          <Link
+            to="/demo"
+            className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors ${
+              isActive("/demo") ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <polygon points="7,4 16,10 7,16" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+              <circle cx="4" cy="4"  r="1.2" fill="currentColor" opacity="0.6"/>
+              <circle cx="4" cy="16" r="1.2" fill="currentColor" opacity="0.4"/>
+            </svg>
+            Demo
+          </Link>
+
+          {/* Agent tab */}
+          <button
+            onClick={() => setAgentOpen(!agentOpen)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors cursor-pointer ${
+              agentOpen ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <span className="relative">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.4"/>
+                <circle cx="10" cy="10" r="3"   fill="currentColor"/>
+              </svg>
+              {agentOpen && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
+                  <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
+                </span>
+              )}
+            </span>
+            Agent
+          </button>
+        </div>
+      </nav>
     </>
   );
 }

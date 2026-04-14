@@ -11,7 +11,7 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/pools" element={<Dashboard />} />
