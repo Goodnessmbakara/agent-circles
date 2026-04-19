@@ -39,8 +39,9 @@ async function advanceEligiblePools(): Promise<void> {
 
   for (const contractId of ids) {
     try {
+      if (!registry.isKeeperEnabled(contractId)) continue;
       const pool = await getPoolInfo(contractId);
-      // Only advance pools where the agent is manager and state is active
+      // Only advance when state is active (advance_round is permissionless; agent pays fees)
       if (pool.state !== "Active") continue;
       if (!config.agentPublicKey || pool.config.manager_fee_bps === undefined) continue;
 

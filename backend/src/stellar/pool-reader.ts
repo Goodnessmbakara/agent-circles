@@ -74,7 +74,15 @@ export async function getPoolConfig(contractId: string): Promise<PoolConfig> {
 }
 
 export async function getPoolState(contractId: string): Promise<string> {
-  return String(await readContract(contractId, "get_state"));
+  const raw = await readContract(contractId, "get_state");
+  if (typeof raw === "string") return raw;
+  if (raw && typeof raw === "object" && "name" in raw && typeof (raw as { name: string }).name === "string") {
+    return (raw as { name: string }).name;
+  }
+  if (raw && typeof raw === "object" && "tag" in raw && typeof (raw as { tag: string }).tag === "string") {
+    return (raw as { tag: string }).tag;
+  }
+  return String(raw);
 }
 
 export async function getPoolMembers(contractId: string): Promise<string[]> {

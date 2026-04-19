@@ -37,7 +37,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder="Ask the agent…"
+        placeholder="Ask the agent or reply 1–4…"
         className="flex-1 bg-white/[0.04] border border-white/[0.09] rounded-xl px-3.5 py-2.5 text-sm text-zinc-200 placeholder-zinc-600
           focus:outline-none focus:border-brand-500/50 resize-none transition-colors duration-150 leading-relaxed"
         style={{ maxHeight: "120px" }}

@@ -1,24 +1,65 @@
 import type { FastifyInstance } from "fastify";
+import fs from "fs/promises";
+import path from "path";
 import { z } from "zod";
-import { Address, nativeToScVal, xdr } from "@stellar/stellar-sdk";
-import { buildContractTx } from "../stellar/tx-builder.js";
+import { Address, hash, nativeToScVal, StrKey, xdr } from "@stellar/stellar-sdk";
+import { deriveCustomContractId } from "../stellar/contract-id.js";
+import { buildContractTx, buildCreateCustomContractTx, buildUploadWasmTx } from "../stellar/tx-builder.js";
+import { poolInfoToApi } from "../stellar/pool-api.js";
 import { getPoolInfo } from "../stellar/pool-reader.js";
 import { config } from "../config.js";
 import * as registry from "../store/pool-registry.js";
 
 const CreatePoolSchema = z.object({
+  /** Deployed `rosca_pool` WASM instance (StrKey contract `C…`). */
+  contract_id: z.string().refine((id) => StrKey.isValidContract(id), {
+    message:
+      "Must be a Soroban contract ID (starts with C). Use “Deploy pool contract” in the app or paste a valid C… ID — not your wallet address (G…).",
+  }),
   admin: z.string(),
-  token: z.string(),
+  /** Soroban token contract; omitted = backend uses DEFAULT_TOKEN_CONTRACT (testnet USDC). */
+  token: z.string().optional(),
   contribution_amount: z.number().positive(),
   round_period: z.number().positive(),
-  max_members: z.number().min(2).max(20),
+  max_members: z.number().min(2).max(100),
   manager: z.string(),
   manager_fee_bps: z.number().min(0).max(500),
 });
 
-const RegisterSchema = z.object({ contract_id: z.string() });
+const RegisterSchema = z.object({
+  contract_id: z.string(),
+  name: z.string().max(80).optional(),
+  /** When false, backend keeper skips this pool for automated `advance_round`. */
+  keeper_enabled: z.boolean().optional(),
+});
 const JoinPoolSchema = z.object({ member: z.string() });
 const ContributeSchema = z.object({ member: z.string() });
+
+const DeployUploadSchema = z.object({ source: z.string() });
+const DeployCreateSchema = z.object({
+  source: z.string(),
+  wasm_hash: z.string().regex(/^[0-9a-f]{64}$/i, "wasm_hash must be 64 hex chars (SHA-256 of WASM)"),
+  salt: z.string().regex(/^[0-9a-f]{64}$/i, "salt must be 64 hex chars (32 bytes)"),
+});
+
+function hexToBuffer(hex: string): Buffer {
+  return Buffer.from(hex, "hex");
+}
+
+async function readRoscaWasm(): Promise<Buffer> {
+  const p = config.roscaPoolWasmPath;
+  const resolved = path.isAbsolute(p) ? p : path.resolve(process.cwd(), p);
+  try {
+    return await fs.readFile(resolved);
+  } catch {
+    throw Object.assign(
+      new Error(
+        `Pool WASM not found at ${resolved}. Build it with: stellar contract build --manifest-path contracts/rosca_pool/Cargo.toml`,
+      ),
+      { statusCode: 503 },
+    );
+  }
+}
 
 export async function poolRoutes(app: FastifyInstance) {
   // List all known pools with live on-chain state
@@ -29,14 +70,65 @@ export async function poolRoutes(app: FastifyInstance) {
       .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof getPoolInfo>>> =>
         r.status === "fulfilled"
       )
-      .map((r) => r.value);
+      .map((r) =>
+        poolInfoToApi(
+          r.value,
+          registry.getDisplayName(r.value.contract_id),
+          registry.isKeeperEnabled(r.value.contract_id),
+        ),
+      );
     return { data };
+  });
+
+  // --- Deploy pool WASM (two user-signed txs: upload, then create) — register before /pools/:id
+
+  app.post("/pools/deploy/upload", async (request) => {
+    const { source } = DeployUploadSchema.parse(request.body);
+    const wasm = await readRoscaWasm();
+    const built = await buildUploadWasmTx({ sourceAddress: source, wasm });
+    return {
+      data: {
+        unsignedXdr: built.unsignedXdr,
+        simulationResult: built.simulationResult,
+        wasm_hash_hex: built.wasmHash.toString("hex"),
+        wasm_size: wasm.length,
+      },
+    };
+  });
+
+  app.post("/pools/deploy/create", async (request) => {
+    const body = DeployCreateSchema.parse(request.body);
+    const wasm = await readRoscaWasm();
+    const wasmHash = hash(wasm);
+    const reqHash = hexToBuffer(body.wasm_hash.toLowerCase());
+    if (!reqHash.equals(wasmHash)) {
+      throw Object.assign(
+        new Error(
+          "wasm_hash does not match the WASM file on the server. Run upload deploy again, then create in the same session.",
+        ),
+        { statusCode: 400 },
+      );
+    }
+    const salt = hexToBuffer(body.salt.toLowerCase());
+    const contractId = deriveCustomContractId(config.networkPassphrase, body.source, salt);
+    const built = await buildCreateCustomContractTx({
+      sourceAddress: body.source,
+      wasmHash,
+      salt,
+    });
+    return {
+      data: {
+        unsignedXdr: built.unsignedXdr,
+        simulationResult: built.simulationResult,
+        contract_id: contractId,
+      },
+    };
   });
 
   // Register a newly deployed pool contract ID
   app.post("/pools/register", async (request) => {
-    const { contract_id } = RegisterSchema.parse(request.body);
-    registry.register(contract_id);
+    const { contract_id, name, keeper_enabled } = RegisterSchema.parse(request.body);
+    registry.register(contract_id, name, keeper_enabled ?? true);
     return { data: { registered: true, contract_id } };
   });
 
@@ -50,16 +142,23 @@ export async function poolRoutes(app: FastifyInstance) {
       });
     }
     const pool = await getPoolInfo(request.params.id);
-    return { data: pool };
+    return {
+      data: poolInfoToApi(
+        pool,
+        registry.getDisplayName(request.params.id),
+        registry.isKeeperEnabled(request.params.id),
+      ),
+    };
   });
 
   // Build initialize tx (returns unsigned XDR for client to sign + deploy)
   app.post("/pools", async (request) => {
     const body = CreatePoolSchema.parse(request.body);
+    const token = body.token ?? config.defaultTokenContract;
 
     const args: xdr.ScVal[] = [
       new Address(body.admin).toScVal(),
-      new Address(body.token).toScVal(),
+      new Address(token).toScVal(),
       nativeToScVal(body.contribution_amount, { type: "i128" }),
       nativeToScVal(body.round_period, { type: "u64" }),
       nativeToScVal(body.max_members, { type: "u32" }),
@@ -68,7 +167,7 @@ export async function poolRoutes(app: FastifyInstance) {
     ];
 
     const result = await buildContractTx({
-      contractId: body.admin, // placeholder; actual contract ID set post-deploy
+      contractId: body.contract_id,
       method: "initialize",
       args,
       sourceAddress: body.admin,
@@ -120,6 +219,12 @@ export async function poolRoutes(app: FastifyInstance) {
   // Live pool status from chain
   app.get<{ Params: { id: string } }>("/pools/:id/status", async (request) => {
     const pool = await getPoolInfo(request.params.id);
-    return { data: pool };
+    return {
+      data: poolInfoToApi(
+        pool,
+        registry.getDisplayName(request.params.id),
+        registry.isKeeperEnabled(request.params.id),
+      ),
+    };
   });
 }

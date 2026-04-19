@@ -83,10 +83,12 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2 ml-auto">
-            {/* Agent toggle */}
+            {/* Chat assistant (LLM help — not keeper / on-chain automation) */}
             <button
+              type="button"
               onClick={() => setAgentOpen(!agentOpen)}
-              title="Open AI agent"
+              title="Chat help for pools and ROSCAs — not automated round advancement"
+              aria-label="Open pool assistant chat"
               className={`relative flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer ${
                 agentOpen
                   ? "border-indigo-500/40 text-indigo-300"
@@ -100,11 +102,15 @@ export function Header() {
                   <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
                 </span>
               )}
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.4"/>
-                <circle cx="6.5" cy="6.5" r="2" fill="currentColor"/>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+                <path
+                  d="M2.5 3.5C2.5 2.95 2.95 2.5 3.5 2.5h6c.55 0 1 .45 1 1v4.5c0 .55-.45 1-1 1H6.2L4.5 11v-2H3.5c-.55 0-1-.45-1-1v-4.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
               </svg>
-              Agent
+              Assistant
             </button>
 
             {/* Divider */}
@@ -154,17 +160,23 @@ export function Header() {
             Demo
           </Link>
 
-          {/* Agent tab */}
+          {/* Assistant tab — chat help, not chain automation */}
           <button
+            type="button"
             onClick={() => setAgentOpen(!agentOpen)}
+            aria-label="Open pool assistant chat"
             className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors cursor-pointer ${
               agentOpen ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
             <span className="relative">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.4"/>
-                <circle cx="10" cy="10" r="3"   fill="currentColor"/>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+                <path
+                  d="M4 5.5C4 4.67 4.67 4 5.5 4h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-2.3L9.5 17v-4H5.5C4.67 13 4 12.33 4 11.5v-6z"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinejoin="round"
+                />
               </svg>
               {agentOpen && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
@@ -172,7 +184,7 @@ export function Header() {
                 </span>
               )}
             </span>
-            Agent
+            Assistant
           </button>
         </div>
       </nav>

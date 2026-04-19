@@ -30,3 +30,8 @@ export function shortenAddress(address: string): string {
   if (address.length <= 12) return address;
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+/** Free testnet XLM — account must exist on-chain before Soroban can build txs. */
+export function friendbotUrl(address: string): string {
+  return `https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`;
+}

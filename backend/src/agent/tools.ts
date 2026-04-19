@@ -78,4 +78,19 @@ export const TOOLS: Anthropic.Tool[] = [
       required: ["pool_id", "member", "remind_at_minutes", "message"],
     },
   },
+  {
+    name: "prepare_join",
+    description:
+      "Start the join flow for a pool. When the user picks a pool to join, call this with that pool_id. If a wallet is connected, builds an unsigned join transaction for them to sign in-app. If not, returns a navigation action to the join page. Does not sign anything server-side.",
+    input_schema: {
+      type: "object",
+      properties: {
+        pool_id: {
+          type: "string",
+          description: "Contract ID of the pool the user wants to join.",
+        },
+      },
+      required: ["pool_id"],
+    },
+  },
 ];

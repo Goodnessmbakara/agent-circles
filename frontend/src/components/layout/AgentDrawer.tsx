@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { ChatMessage } from "../chat/ChatMessage";
 import { ChatInput } from "../chat/ChatInput";
-import { api } from "../../lib/api";
+import { api, type AgentChatAction } from "../../lib/api";
 import { useWalletStore } from "../../stores/wallet-store";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  actions?: AgentChatAction[];
 }
 
 interface AgentDrawerProps {
@@ -17,7 +18,7 @@ interface AgentDrawerProps {
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Hi! I'm your Agent Circles assistant. I can check pool status, show your positions, schedule reminders, and explain how savings circles work. What would you like to know?",
+    "Hi! I'm your pool assistant (chat help). What would you like to do?\n\n1. Show pools you're a member of\n2. Check the status of a specific pool\n3. Explain how savings circles work\n4. Set up a contribution reminder\n\nReply with a number (1–4) or type a question.",
 };
 
 export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
@@ -40,8 +41,11 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
     const chatHistory = history.filter((m) => m !== WELCOME);
 
     try {
-      const { reply } = await api.agentChat(chatHistory, address ?? undefined);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      const { reply, actions } = await api.agentChat(chatHistory, address ?? undefined);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply, actions: actions?.length ? actions : undefined },
+      ]);
     } catch (err) {
       const msg =
         err instanceof Error && err.message
@@ -80,8 +84,11 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-200">Agent</p>
-              <p className="text-[11px] text-zinc-600 -mt-0.5">Powered by Claude</p>
+              <p className="text-sm font-medium text-zinc-200">Assistant</p>
+              <p className="text-[11px] text-zinc-500 -mt-0.5 leading-snug">
+                Chat help for pools — not on-chain automation
+              </p>
+              <p className="text-[10px] text-zinc-600 mt-0.5">Powered by Claude</p>
             </div>
           </div>
 
@@ -98,7 +105,13 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-1">
           {messages.map((msg, i) => (
-            <ChatMessage key={i} role={msg.role} content={msg.content} />
+            <ChatMessage
+              key={i}
+              role={msg.role}
+              content={msg.content}
+              actions={msg.actions}
+              actionsDisabled={loading && i === messages.length - 1}
+            />
           ))}
 
           {loading && (

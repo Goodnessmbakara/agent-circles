@@ -1,13 +1,17 @@
+import { Address } from "@stellar/stellar-sdk";
+import type { AgentAction } from "./actions.js";
 import { getPoolInfo, getManagerFees } from "../stellar/pool-reader.js";
+import { buildContractTx } from "../stellar/tx-builder.js";
 import * as registry from "../store/pool-registry.js";
 import * as reminders from "../store/reminder-queue.js";
 
 export interface ToolContext {
   walletAddress?: string;
+  actions: AgentAction[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function executeTool(name: string, input: Record<string, any>, _context: ToolContext): Promise<string> {
+export async function executeTool(name: string, input: Record<string, any>, context: ToolContext): Promise<string> {
   try {
     switch (name) {
       case "list_pools": {
@@ -109,6 +113,61 @@ export async function executeTool(name: string, input: Record<string, any>, _con
           pools_with_fees: poolsWithFees,
           total_pools_checked: ids.length,
         });
+      }
+
+      case "prepare_join": {
+        const poolId = input.pool_id as string;
+        if (!poolId) {
+          return JSON.stringify({ error: "pool_id is required" });
+        }
+        if (!registry.has(poolId)) {
+          return JSON.stringify({
+            error: `Pool ${poolId} is not registered. Use list_pools for known contract IDs.`,
+          });
+        }
+        try {
+          const info = await getPoolInfo(poolId);
+          const wallet = context.walletAddress;
+          if (wallet && info.members.includes(wallet)) {
+            return JSON.stringify({
+              error: "This wallet is already a member of this pool.",
+              pool_id: poolId,
+            });
+          }
+          if (wallet) {
+            const result = await buildContractTx({
+              contractId: poolId,
+              method: "join",
+              args: [new Address(wallet).toScVal()],
+              sourceAddress: wallet,
+            });
+            const action: AgentAction = {
+              type: "sign_join",
+              pool_id: poolId,
+              unsignedXdr: result.unsignedXdr,
+              simulationResult: result.simulationResult,
+            };
+            context.actions.push(action);
+            return JSON.stringify({
+              ok: true,
+              pool_id: poolId,
+              prepared_unsigned_tx: true,
+              message:
+                "Join transaction is ready. The user can tap **Sign & join** below (wallet must sign).",
+            });
+          }
+          context.actions.push({ type: "open_join", pool_id: poolId });
+          return JSON.stringify({
+            ok: true,
+            pool_id: poolId,
+            prepared_unsigned_tx: false,
+            message:
+              "No wallet connected. The user can open the join page below, connect a wallet, then join.",
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return JSON.stringify({ error: `Could not prepare join: ${message}` });
+        }
       }
 
       case "schedule_reminder": {

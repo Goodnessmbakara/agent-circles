@@ -32,8 +32,13 @@ export function PoolCard({ pool }: PoolCardProps) {
     >
       {/* Header row */}
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="font-mono text-xs text-zinc-500 mb-1">
+        <div className="min-w-0 pr-2">
+          <h3 className="text-lg font-semibold text-zinc-50 truncate mb-0.5">
+            {pool.name?.trim()
+              ? pool.name.trim()
+              : `Pool ${pool.contract_id.slice(0, 6)}…${pool.contract_id.slice(-4)}`}
+          </h3>
+          <p className="font-mono text-[11px] text-zinc-500 mb-1">
             {pool.contract_id.slice(0, 8)}…{pool.contract_id.slice(-4)}
           </p>
           <p className="text-xl font-bold tabular-nums text-zinc-50">

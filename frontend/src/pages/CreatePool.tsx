@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router";
 import { useWalletStore } from "../stores/wallet-store";
 import { api } from "../lib/api";
 import { useSubmitTx } from "../hooks/use-tx";
+import { friendbotUrl } from "../lib/stellar";
+import { formatSubmitError } from "../lib/format-submit-error";
 
 const PERIOD_OPTIONS = [
   { label: "1 minute (demo)", value: 60 },
@@ -11,11 +13,20 @@ const PERIOD_OPTIONS = [
   { label: "1 week", value: 604800 },
 ];
 
+function randomSaltHex(): string {
+  const b = new Uint8Array(32);
+  crypto.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+}
+
 export function CreatePool() {
   const { address } = useWalletStore();
   const navigate = useNavigate();
   const submitTx = useSubmitTx();
 
+  const [poolName, setPoolName] = useState("");
+  /** Server-side automation: keeper submits advance_round when rules allow (separate from chat assistant). */
+  const [keeperEnabled, setKeeperEnabled] = useState(true);
   const [contribution, setContribution] = useState("10");
   const [period, setPeriod] = useState(60);
   const [maxMembers, setMaxMembers] = useState(5);
@@ -42,11 +53,34 @@ export function CreatePool() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!address) return;
     setLoading(true);
     setError(null);
 
     try {
-      const result = await api.buildCreatePool({
+      const upload = await api.buildDeployUpload(address);
+      const tx1 = await submitTx.mutateAsync(upload.unsignedXdr);
+      if (tx1.status !== "SUCCESS") {
+        setError(`Upload WASM failed: ${formatSubmitError(tx1)}`);
+        return;
+      }
+
+      const salt = randomSaltHex();
+      const created = await api.buildDeployCreate({
+        source: address,
+        wasm_hash: upload.wasm_hash_hex,
+        salt,
+      });
+      const tx2 = await submitTx.mutateAsync(created.unsignedXdr);
+      if (tx2.status !== "SUCCESS") {
+        setError(`Create contract failed: ${formatSubmitError(tx2)}`);
+        return;
+      }
+
+      const cid = created.contract_id;
+
+      const init = await api.buildCreatePool({
+        contract_id: cid,
         admin: address,
         contribution_amount: Math.round(parseFloat(contribution) * 1_000_000),
         round_period: period,
@@ -55,13 +89,14 @@ export function CreatePool() {
         manager_fee_bps: feeBps,
       });
 
-      const txResult = await submitTx.mutateAsync(result.unsignedXdr);
-
-      if (txResult.status === "SUCCESS") {
-        navigate("/pools");
-      } else {
-        setError(`Transaction failed: ${txResult.error ?? txResult.status}`);
+      const tx3 = await submitTx.mutateAsync(init.unsignedXdr);
+      if (tx3.status !== "SUCCESS") {
+        setError(`Initialize pool failed: ${formatSubmitError(tx3)}`);
+        return;
       }
+
+      await api.registerPool(cid, poolName.trim(), keeperEnabled);
+      navigate("/pools");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create pool");
     } finally {
@@ -89,10 +124,70 @@ export function CreatePool() {
             <div className="card p-6">
               <h1 className="text-lg font-semibold text-zinc-50 mb-1">Create a Circle</h1>
               <p className="text-sm text-zinc-500 mb-6">
-                Configure your savings circle. Members join during setup, then contributions begin.
+                Configure your savings circle. Creating a circle will open your wallet three times: deploy the pool
+                contract, then initialize it with the settings below.
               </p>
 
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 mb-6 text-xs text-amber-200/90 leading-relaxed">
+                <strong className="text-amber-100">Testnet:</strong> Your wallet must be{" "}
+                <span className="text-zinc-300">funded on Stellar testnet</span> before any transaction
+                can be built. If you see “Account not found”, open{" "}
+                <a
+                  href={friendbotUrl(address)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-400 underline hover:text-brand-300"
+                >
+                  Friendbot
+                </a>{" "}
+                to receive free XLM, wait a few seconds, then try again. In Freighter, use{" "}
+                <span className="text-zinc-300">Test network</span> (not Mainnet).
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="label">Circle name</label>
+                  <input
+                    type="text"
+                    value={poolName}
+                    onChange={(e) => setPoolName(e.target.value)}
+                    className="input"
+                    placeholder="e.g. Friday friends fund"
+                    maxLength={80}
+                    autoComplete="off"
+                  />
+                  <p className="text-[11px] text-zinc-500 mt-1.5">
+                    Shown on the pool list so you can spot this circle easily.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-zinc-200">Automate round advances</p>
+                    <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                      When on, the server <span className="text-zinc-400">agent key</span> may submit{" "}
+                      <code className="text-zinc-500">advance_round</code> for this pool (you still sign joins
+                      yourself). Turn off if you only want manual or third-party advancement. The chat assistant
+                      is unchanged.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={keeperEnabled}
+                    onClick={() => setKeeperEnabled((v) => !v)}
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                      keeperEnabled ? "bg-indigo-600" : "bg-zinc-700"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                        keeperEnabled ? "left-6" : "left-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <div>
                   <label className="label">Contribution per round (USDC)</label>
                   <input
@@ -169,7 +264,7 @@ export function CreatePool() {
                         <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
                         <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
-                      Creating…
+                      Creating circle…
                     </>
                   ) : (
                     "Create Circle"
@@ -186,6 +281,16 @@ export function CreatePool() {
               <div className="divider !my-0" />
 
               <div className="space-y-3 text-sm">
+                <div className="flex justify-between gap-2">
+                  <span className="text-zinc-500 shrink-0">Name</span>
+                  <span className="text-zinc-200 text-right truncate min-w-0">
+                    {poolName.trim() || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-zinc-500 shrink-0">Auto-advance</span>
+                  <span className="text-zinc-200">{keeperEnabled ? "On" : "Off"}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Contribution</span>
                   <span className="text-zinc-200 tabular-nums">

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { submitSignedTx } from "../stellar/tx-submit.js";
-import { getRpcServer } from "../stellar/client.js";
+import { getTransactionPollOnly } from "../stellar/soroban-get-transaction-raw.js";
 
 const SubmitSchema = z.object({ signed_xdr: z.string() });
 
@@ -15,12 +15,11 @@ export async function txRoutes(app: FastifyInstance) {
 
   // Poll transaction status by hash
   app.get<{ Params: { hash: string } }>("/tx/:hash", async (request) => {
-    const server = getRpcServer();
-    const result = await server.getTransaction(request.params.hash);
+    const result = await getTransactionPollOnly(request.params.hash);
     return {
       data: {
         status: result.status,
-        ledger: "ledger" in result ? result.ledger : undefined,
+        ledger: result.ledger,
       },
     };
   });

@@ -1,9 +1,14 @@
+import type { AgentChatAction } from "../../lib/api";
+import { AgentChatActions } from "./AgentChatActions";
+
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  actions?: AgentChatAction[];
+  actionsDisabled?: boolean;
 }
 
-export function ChatMessage({ role, content }: ChatMessageProps) {
+export function ChatMessage({ role, content, actions, actionsDisabled }: ChatMessageProps) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-2.5`}>
@@ -23,6 +28,9 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         }`}
       >
         <p className="whitespace-pre-wrap">{content}</p>
+        {!isUser && actions && actions.length > 0 && (
+          <AgentChatActions actions={actions} disabled={actionsDisabled} />
+        )}
       </div>
     </div>
   );

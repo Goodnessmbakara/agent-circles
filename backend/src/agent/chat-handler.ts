@@ -3,6 +3,7 @@ import AnthropicBedrock from "@anthropic-ai/bedrock-sdk";
 import { config } from "../config.js";
 import { getSystemPrompt } from "./system-prompt.js";
 import { TOOLS } from "./tools.js";
+import type { AgentAction } from "./actions.js";
 import { executeTool, type ToolContext } from "./tool-executor.js";
 
 export interface ChatMessage {
@@ -16,8 +17,6 @@ export interface ChatContext {
 
 const MAX_TOOL_ROUNDS = 5;
 
-// Bedrock cross-region inference model ID for Claude Sonnet
-const BEDROCK_MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0";
 // Direct Anthropic API model ID
 const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
@@ -36,13 +35,18 @@ function getClient(): Anthropic | AnthropicBedrock {
 }
 
 function getModelId(): string {
-  return config.llmProvider === "bedrock" ? BEDROCK_MODEL : ANTHROPIC_MODEL;
+  return config.llmProvider === "bedrock" ? config.bedrockModelId : ANTHROPIC_MODEL;
+}
+
+export interface AgentChatResult {
+  reply: string;
+  actions: AgentAction[];
 }
 
 export async function runAgentChat(
   messages: ChatMessage[],
   context: ChatContext,
-): Promise<string> {
+): Promise<AgentChatResult> {
   const client = getClient();
   const model = getModelId();
 
@@ -56,7 +60,10 @@ export async function runAgentChat(
     content: m.content,
   }));
 
-  const toolContext: ToolContext = { walletAddress: context.walletAddress };
+  const toolContext: ToolContext = {
+    walletAddress: context.walletAddress,
+    actions: [],
+  };
 
   let toolRoundsUsed = 0;
   let currentMessages = [...anthropicMessages];
@@ -65,7 +72,7 @@ export async function runAgentChat(
     // Both SDK clients share the same .messages.create interface
     const response = await (client as Anthropic).messages.create({
       model,
-      max_tokens: 1024,
+      max_tokens: config.agentMaxTokens,
       system: systemPrompt,
       tools: TOOLS,
       messages: currentMessages,
@@ -79,7 +86,10 @@ export async function runAgentChat(
       const textBlocks = response.content.filter(
         (block): block is Anthropic.TextBlock => block.type === "text",
       );
-      return textBlocks.map((b) => b.text).join("\n").trim();
+      return {
+        reply: textBlocks.map((b) => b.text).join("\n").trim(),
+        actions: toolContext.actions,
+      };
     }
 
     toolRoundsUsed++;

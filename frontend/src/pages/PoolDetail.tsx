@@ -105,10 +105,18 @@ export function PoolDetail() {
                 {pool.contract_id.slice(0, 8)}…{pool.contract_id.slice(-6)}
               </span>
             </div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-zinc-50">Circle Detail</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold text-zinc-50">
+                {pool.name?.trim() ? pool.name.trim() : "Circle"}
+              </h1>
               <StatePill state={pool.state} />
             </div>
+            <p className="text-xs text-zinc-500">
+              Server automation:{" "}
+              <span className="text-zinc-400">
+                {pool.keeper_enabled ? "on — keeper may advance rounds when rules allow" : "off"}
+              </span>
+            </p>
           </div>
 
           {isActive && pool.start_time && (
@@ -121,7 +129,7 @@ export function PoolDetail() {
         </div>
 
         {/* Stat tiles */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="stat-tile">
             <p className="stat-label">Contribution</p>
             <p className="stat-value">{formatUsdc(pool.contribution)}</p>

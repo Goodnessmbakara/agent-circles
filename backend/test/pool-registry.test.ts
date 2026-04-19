@@ -38,4 +38,17 @@ describe("pool-registry", () => {
     expect(ids).toContain(TEST_ID_1);
     expect(ids).toContain(TEST_ID_2);
   });
+
+  it("register stores optional display name", () => {
+    registry.register(TEST_ID_1, "  My Circle  ");
+    expect(registry.getDisplayName(TEST_ID_1)).toBe("My Circle");
+    expect(registry.isKeeperEnabled(TEST_ID_1)).toBe(true);
+    registry.unregister(TEST_ID_1);
+  });
+
+  it("register can disable keeper automation", () => {
+    registry.register(TEST_ID_1, "x", false);
+    expect(registry.isKeeperEnabled(TEST_ID_1)).toBe(false);
+    registry.unregister(TEST_ID_1);
+  });
 });

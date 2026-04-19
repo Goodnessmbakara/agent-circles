@@ -33,10 +33,13 @@ export async function agentRoutes(app: FastifyInstance) {
 
     if (!llmReady) {
       return reply.status(503).send({
-        error:
-          config.llmProvider === "bedrock"
-            ? "AWS credentials not configured. Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (or use an IAM role) and LLM_PROVIDER=bedrock"
-            : "CLAUDE_API_KEY not configured",
+        error: {
+          code: "llm_not_configured",
+          message:
+            config.llmProvider === "bedrock"
+              ? "AWS credentials not configured. Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (or use an IAM role) and LLM_PROVIDER=bedrock"
+              : "CLAUDE_API_KEY not configured",
+        },
       });
     }
 
@@ -47,8 +50,8 @@ export async function agentRoutes(app: FastifyInstance) {
         ? request.headers["x-wallet-address"]
         : undefined);
 
-    const reply_text = await runAgentChat(body.messages, { walletAddress });
-    return { reply: reply_text };
+    const { reply: replyText, actions } = await runAgentChat(body.messages, { walletAddress });
+    return { data: { reply: replyText, actions } };
   });
 
   // Schedule a contribution reminder for a member

@@ -6,7 +6,7 @@ _Last updated: 2026-04-14_
 ## What This Is
 
 Agent Circles is a trustless on-chain ROSCA (rotating savings circle) built on Stellar/Soroban.
-A group pools contributions each round; one member receives the full pot per round, rotating until everyone has been paid out. A Claude AI agent (via AWS Bedrock) monitors pools, advances rounds, and answers user questions via a chat drawer.
+A group pools contributions each round; one member receives the full pot per round, rotating until everyone has been paid out. A **keeper** service (backend + `AGENT_SECRET_KEY`) auto-advances rounds on-chain when contract rules allow. Separately, a **Claude** chat agent (AWS Bedrock or Anthropic API) answers questions via tools (read pools, reminders)—it does **not** sign user join transactions.
 
 ---
 
@@ -38,8 +38,9 @@ A group pools contributions each round; one member receives the full pot per rou
 - Agent chat drawer wired to `/api/agent/chat`
 
 ### Phase 4 — Claude Agent ✅
-- `backend/src/agent/` — system prompt, 5 tool definitions, tool executor, chat handler
-- Tools: `list_pools`, `get_pool`, `get_wallet_pools`, `get_fee_summary`, `schedule_reminder`
+- `backend/src/agent/` — system prompt, tool definitions, tool executor, chat handler
+- Tools: `list_pools`, `get_pool`, `get_wallet_pools`, `get_fee_summary`, `schedule_reminder`, **`prepare_join`** (builds unsigned join tx when wallet is connected, or returns `open_join` action for the UI)
+- `POST /api/agent/chat` returns `{ reply, actions }` — frontend renders **Open join page** / **Sign & join** buttons from `actions`
 - **AWS Bedrock** integration (uses `us.anthropic.claude-3-5-sonnet-20241022-v2:0`)
 - Credentials live in `backend/.env` (AWS keys from `~/.aws/credentials`)
 - Fallback: set `LLM_PROVIDER=anthropic` + `CLAUDE_API_KEY` to use direct API instead
@@ -49,6 +50,18 @@ A group pools contributions each round; one member receives the full pot per rou
 ## What's Left To Do
 
 ### 🔴 Blocking — Nothing works end-to-end without this
+
+**Create pool (two steps — important)**  
+Soroban `initialize` is invoked on a **deployed WASM contract** (StrKey `C…`), never on a wallet (`G…`). The app’s “Create Circle” form requires you to **paste the contract ID** from `./scripts/deploy-contract.sh` (one deploy = one pool instance). After `initialize` succeeds, the UI registers that ID with the backend.
+
+**Browser / web deploy — not required to use CLI**  
+Stellar does **not** mandate the CLI. `stellar contract deploy` is a convenience wrapper around Soroban RPC + transactions. The same can be done in **JavaScript** with `@stellar/stellar-sdk`, for example:
+- `Operation.uploadContractWasm({ wasm: Buffer })` — upload the compiled `.wasm` bytes
+- `Operation.createCustomContract({ wasmHash, salt, ... })` — instantiate a new contract from that hash (same as CLI deploy)
+
+A typical **in-browser** flow: fetch WASM from your site (e.g. `public/contracts/rosca_pool.wasm`), have the user **sign** the upload tx (and possibly a second tx for `createCustomContract`), then read the new **contract `C…` id** from the transaction result and pass it into the existing **initialize** step. Tradeoffs: larger frontend asset, two signing steps, footprint/fee handling, and good error handling — but it is **user-friendly** once implemented.
+
+**Best UX for many pools (future):** add a **factory** contract deployed once; the web app only calls `deploy_child_pool()` (or similar) with no WASM in the browser per pool.
 
 **1. Install stellar CLI + deploy contract**
 ```bash
@@ -118,10 +131,11 @@ No caller code changes required.
 Current Bedrock model: `us.anthropic.claude-3-5-sonnet-20241022-v2:0`
 When Claude Sonnet 4.6 becomes available on Bedrock, update `BEDROCK_MODEL` in `backend/src/agent/chat-handler.ts`.
 
-**USDC token on testnet**
-The contract accepts any Stellar token. For the demo to work properly, members need a USDC-equivalent token. Options:
-- Deploy a simple test token contract (stellar has a `soroban-examples` token)
-- Use Stellar's native XLM as contribution currency (change `contribution_amount` denomination)
+**Primary / stable asset (testnet)**
+- **Default in app:** **USDC** Stellar Asset Contract on testnet: `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` (Circle test USDC; classic `USDC-GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`). Defined as `TESTNET_USDC_SAC` in `backend/src/stellar/testnet-assets.ts`.
+- **Native XLM SAC** (no stable; for XLM-only experiments): `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` — `TESTNET_NATIVE_XLM_SAC` in the same file.
+- An earlier placeholder StrKey was **wrong** (invalid / mismatched suffix) and triggered wallet/SDK “unsupported address type” errors; always use the exact IDs above or Stellar Expert.
+- **Mainnet:** Primary regulated dollar stablecoin on Stellar is **USDC** (Circle). Derive the SAC from the issued asset or look up the current contract on [Stellar Expert](https://stellar.expert); do not hardcode mainnet IDs without verifying the current issuer/SAC mapping.
 
 **Landing page content**
 The landing page has placeholder stats (hardcoded $2.4M TVL, 148 pools). Wire these to real data from `/api/pools` or leave as marketing copy until mainnet.
@@ -162,6 +176,8 @@ AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=<from ~/.aws/credentials>
 AWS_SECRET_ACCESS_KEY=<from ~/.aws/credentials>
 PORT=3001
+# Optional: override default Soroban SAC for pool create (default = testnet USDC SAC in code)
+# DEFAULT_TOKEN_CONTRACT=CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA
 ```
 
 **Railway Variables** — same as above, set in dashboard
