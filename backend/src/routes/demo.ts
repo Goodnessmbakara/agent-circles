@@ -32,20 +32,6 @@ export async function demoRoutes(app: FastifyInstance) {
   });
 
   app.post("/demo/run", async (_request, reply) => {
-    // Guard: require DEMO_CONTRACT_ID
-    if (!config.demoContractId) {
-      return reply.status(503).send({
-        error: {
-          code: "demo_contract_not_configured",
-          message:
-            "Demo contract not deployed yet. Set DEMO_CONTRACT_ID in .env after running: stellar contract deploy",
-          details: [],
-        },
-        request_id: "",
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     const runMs = config.demoRunCooldownSec * 1000;
     const now = Date.now();
     const elapsed = now - lastRunTime;
@@ -68,7 +54,7 @@ export async function demoRoutes(app: FastifyInstance) {
     // Do not burn cooldown on preflight-only failures (e.g. bad DEMO_CONTRACT_ID) so users can retry immediately after fixing config.
     const onlyPreflightFail =
       result.steps.length === 1 &&
-      result.steps[0]?.step === "preflight_pool" &&
+      (result.steps[0]?.step === "preflight_pool" || result.steps[0]?.step === "ensure_pool") &&
       result.steps[0]?.status === "failed";
     if (!onlyPreflightFail) {
       lastRunTime = Date.now();

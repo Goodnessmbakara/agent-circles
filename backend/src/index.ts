@@ -19,7 +19,11 @@ await app.register(txRoutes, { prefix: "/api" });
 await app.register(agentRoutes, { prefix: "/api" });
 await app.register(demoRoutes, { prefix: "/api" });
 
-app.get("/health", async () => ({ status: "ok" }));
+app.get("/health", async () => ({
+  status: "ok",
+  /** Set at image build (`Dockerfile.api` GIT_COMMIT) or by the platform (e.g. FLY_IMAGE_REF). */
+  commit: process.env.GIT_COMMIT ?? process.env.FLY_IMAGE_REF ?? "unknown",
+}));
 
 startKeeper();
 

@@ -11,6 +11,8 @@ RUN npm run build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
 ENV NODE_ENV=production
 ENV ROSCA_POOL_WASM_PATH=/app/rosca_pool.wasm
 COPY backend/package*.json ./
