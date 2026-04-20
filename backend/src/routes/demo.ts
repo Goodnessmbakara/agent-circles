@@ -2,21 +2,18 @@ import type { FastifyInstance } from "fastify";
 import { seedDemoAccounts, runFullDemo } from "../services/demo.js";
 import { config } from "../config.js";
 
-// Simple in-memory cooldown — reject if seeded within 30 seconds
+/** In-memory cooldown timestamps (per Fly machine). */
 let lastSeedTime = 0;
-const SEED_COOLDOWN_MS = 30_000;
-
-// Separate cooldown for the full demo run — 60 seconds
 let lastRunTime = 0;
-const RUN_COOLDOWN_MS = 60_000;
 
 export async function demoRoutes(app: FastifyInstance) {
   app.post("/demo/seed", async (_request, reply) => {
+    const seedMs = config.demoSeedCooldownSec * 1000;
     const now = Date.now();
     const elapsed = now - lastSeedTime;
 
-    if (lastSeedTime > 0 && elapsed < SEED_COOLDOWN_MS) {
-      const retryAfter = Math.ceil((SEED_COOLDOWN_MS - elapsed) / 1000);
+    if (seedMs > 0 && lastSeedTime > 0 && elapsed < seedMs) {
+      const retryAfter = Math.ceil((seedMs - elapsed) / 1000);
       reply.header("Retry-After", String(retryAfter));
       return reply.status(429).send({
         error: {
@@ -29,8 +26,8 @@ export async function demoRoutes(app: FastifyInstance) {
       });
     }
 
-    lastSeedTime = now;
     const result = await seedDemoAccounts();
+    lastSeedTime = Date.now();
     return { data: result };
   });
 
@@ -49,12 +46,12 @@ export async function demoRoutes(app: FastifyInstance) {
       });
     }
 
-    // Cooldown check
+    const runMs = config.demoRunCooldownSec * 1000;
     const now = Date.now();
     const elapsed = now - lastRunTime;
 
-    if (lastRunTime > 0 && elapsed < RUN_COOLDOWN_MS) {
-      const retryAfter = Math.ceil((RUN_COOLDOWN_MS - elapsed) / 1000);
+    if (runMs > 0 && lastRunTime > 0 && elapsed < runMs) {
+      const retryAfter = Math.ceil((runMs - elapsed) / 1000);
       reply.header("Retry-After", String(retryAfter));
       return reply.status(429).send({
         error: {
@@ -67,8 +64,15 @@ export async function demoRoutes(app: FastifyInstance) {
       });
     }
 
-    lastRunTime = now;
     const result = await runFullDemo();
+    // Do not burn cooldown on preflight-only failures (e.g. bad DEMO_CONTRACT_ID) so users can retry immediately after fixing config.
+    const onlyPreflightFail =
+      result.steps.length === 1 &&
+      result.steps[0]?.step === "preflight_pool" &&
+      result.steps[0]?.status === "failed";
+    if (!onlyPreflightFail) {
+      lastRunTime = Date.now();
+    }
     return { data: result };
   });
 }

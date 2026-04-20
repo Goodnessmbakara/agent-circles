@@ -63,7 +63,11 @@ export function Demo() {
       setSeedResult(data);
       setRunResult(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to seed demo accounts");
+      if (err instanceof ApiError && err.code === "rate_limited") {
+        setError(`${err.message} (HTTP 429)`);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to seed demo accounts");
+      }
     } finally {
       setSeedLoading(false);
     }
@@ -84,6 +88,8 @@ export function Demo() {
     } catch (err) {
       if (err instanceof ApiError && err.code === "demo_contract_not_configured") {
         setError("Demo contract is not configured on the backend. Set DEMO_CONTRACT_ID and rerun.");
+      } else if (err instanceof ApiError && err.code === "rate_limited") {
+        setError(`${err.message} (HTTP 429 — wait and try again, or ask ops to lower DEMO_RUN_COOLDOWN_SEC on the API.)`);
       } else {
         setError(err instanceof Error ? err.message : "Failed to run full demo");
       }

@@ -33,6 +33,9 @@ export const config = {
   ),
   port: parseInt(env("PORT", "3001"), 10),
   demoContractId: env("DEMO_CONTRACT_ID", ""),
+  /** In-memory rate limits for `/demo/*`. Set to `0` to disable. */
+  demoSeedCooldownSec: parseNonNegInt("DEMO_SEED_COOLDOWN_SEC", 10),
+  demoRunCooldownSec: parseNonNegInt("DEMO_RUN_COOLDOWN_SEC", 20),
   /**
    * Default Soroban SAC when the client omits `token` on pool create.
    * Defaults to **testnet USDC** (`TESTNET_USDC_SAC`). Override via `DEFAULT_TOKEN_CONTRACT`.
@@ -50,6 +53,13 @@ export const config = {
 
 function env(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
+}
+
+function parseNonNegInt(key: string, fallback: number): number {
+  const raw = process.env[key];
+  if (raw === undefined || raw === "") return fallback;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
 function derivePublicKey(secret: string): string {

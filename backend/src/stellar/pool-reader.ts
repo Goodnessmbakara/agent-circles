@@ -1,9 +1,4 @@
-import {
-  Contract,
-  nativeToScVal,
-  scValToNative,
-  xdr,
-} from "@stellar/stellar-sdk";
+import { Contract, scValToNative, xdr } from "@stellar/stellar-sdk";
 import { Api } from "@stellar/stellar-sdk/rpc";
 import { getRpcServer } from "./client.js";
 import { config } from "../config.js";
@@ -51,7 +46,13 @@ async function readContract(
   const sim = await server.simulateTransaction(tx);
 
   if (Api.isSimulationError(sim)) {
-    throw new Error(`Read failed (${method}): ${sim.error}`);
+    const err = String(sim.error);
+    const hint =
+      /UnreachableCodeReached|InvalidAction/i.test(err) &&
+      /get_members|get_config|get_state|get_current_round/i.test(method)
+        ? " This usually means the contract was never initialized with `initialize` after deploy, the ID is not a rosca_pool, or the API network (SOROBAN_RPC_URL / NETWORK_PASSPHRASE) does not match where the pool was deployed."
+        : "";
+    throw new Error(`Read failed (${method}): ${err}${hint}`);
   }
 
   const success = sim as Api.SimulateTransactionSuccessResponse;

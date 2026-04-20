@@ -1,7 +1,13 @@
-import { Keypair, nativeToScVal, TransactionBuilder, xdr } from "@stellar/stellar-sdk";
+import { Address, Keypair, TransactionBuilder, xdr } from "@stellar/stellar-sdk";
 import { buildContractTx } from "../stellar/tx-builder.js";
 import { submitSignedTx } from "../stellar/tx-submit.js";
+import { getPoolInfo } from "../stellar/pool-reader.js";
 import { config } from "../config.js";
+
+/** Soroban `Address` ScVal — must match `new Address(...).toScVal()` used in pool routes; `nativeToScVal(..., { type: "address" })` can trap the contract VM. */
+function memberAddressScVal(publicKey: string): xdr.ScVal {
+  return new Address(publicKey).toScVal();
+}
 
 export interface DemoAccount {
   publicKey: string;
@@ -96,6 +102,64 @@ export async function runFullDemo(): Promise<DemoRunResult> {
   const contractId = config.demoContractId;
   const steps: DemoRunStep[] = [];
 
+  let poolInfo;
+  try {
+    poolInfo = await getPoolInfo(contractId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const explorer = `https://stellar.expert/explorer/testnet/contract/${contractId}`;
+    const detail = [
+      `Cannot read contract ${contractId}: ${msg}`,
+      "",
+      "Fix: set Fly secret DEMO_CONTRACT_ID to a pool that finished **Create Circle** in this app (upload WASM → create contract → **initialize**), on **Stellar testnet** (same as API).",
+      `Inspect contract: ${explorer}`,
+      "If the contract was only deployed but initialize was skipped, complete initialize or create a new circle and paste the new C… ID.",
+    ].join("\n");
+    return {
+      accounts: [],
+      contractId,
+      steps: [
+        {
+          step: "preflight_pool",
+          status: "failed",
+          detail,
+        },
+      ],
+      summary: "Demo aborted: pool not readable — usually uninitialized contract or wrong DEMO_CONTRACT_ID.",
+    };
+  }
+
+  if (poolInfo.state !== "Setup") {
+    return {
+      accounts: [],
+      contractId,
+      steps: [
+        {
+          step: "preflight_pool",
+          status: "failed",
+          detail: `Pool state is **${poolInfo.state}**, not Setup. \`join\` only works during Setup. Set DEMO_CONTRACT_ID to a new pool that is still accepting members, then run again.`,
+        },
+      ],
+      summary: "Demo aborted: pool must be in Setup state.",
+    };
+  }
+
+  const slotsLeft = poolInfo.config.max_members - poolInfo.members.length;
+  if (slotsLeft < 5) {
+    return {
+      accounts: [],
+      contractId,
+      steps: [
+        {
+          step: "preflight_pool",
+          status: "failed",
+          detail: `Pool needs 5 open member slots for this script; max_members=${poolInfo.config.max_members}, current members=${poolInfo.members.length}. Create a pool with max_members ≥ 5 and an empty roster (or use a fresh contract ID).`,
+        },
+      ],
+      summary: "Demo aborted: not enough free member slots.",
+    };
+  }
+
   // Step 1: Fund 5 accounts via Friendbot
   const { accounts } = await seedDemoAccounts();
 
@@ -113,7 +177,7 @@ export async function runFullDemo(): Promise<DemoRunResult> {
     const stepName = `join_member_${i}`;
     try {
       const keypair = Keypair.fromSecret(account.secretKey);
-      const addressArg = nativeToScVal(keypair.publicKey(), { type: "address" });
+      const addressArg = memberAddressScVal(keypair.publicKey());
       const { txHash } = await callContract(contractId, "join", [addressArg], keypair);
       steps.push({ step: stepName, status: "success", txHash, detail: `Member ${i} joined` });
     } catch (err) {
@@ -132,7 +196,7 @@ export async function runFullDemo(): Promise<DemoRunResult> {
     const stepName = `contribute_member_${i}`;
     try {
       const keypair = Keypair.fromSecret(account.secretKey);
-      const addressArg = nativeToScVal(keypair.publicKey(), { type: "address" });
+      const addressArg = memberAddressScVal(keypair.publicKey());
       const { txHash } = await callContract(contractId, "contribute", [addressArg], keypair);
       steps.push({ step: stepName, status: "success", txHash, detail: `Member ${i} contributed` });
     } catch (err) {
