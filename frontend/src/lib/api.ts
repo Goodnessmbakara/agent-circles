@@ -42,16 +42,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const json = parseJsonBody(raw, res.status, res.ok) as {
     data?: T;
     error?: string | { code?: string; message?: string };
+    /** Fastify often puts the useful text here on 404 (e.g. unknown route). */
+    message?: string;
   };
 
   if (!res.ok) {
     const err = json.error;
     const message =
-      typeof err === "string"
-        ? err
-        : typeof err?.message === "string"
-          ? err.message
-          : "Request failed";
+      typeof json.message === "string" && json.message.length > 0
+        ? json.message
+        : typeof err === "string"
+          ? err
+          : typeof err?.message === "string"
+            ? err.message
+            : "Request failed";
     const code =
       typeof err === "object" && err !== null && "code" in err && typeof err.code === "string"
         ? err.code

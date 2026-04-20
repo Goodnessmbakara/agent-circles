@@ -1,0 +1,22 @@
+# API image (Fastify). WASM is prebuilt and committed under artifacts/ (rebuild when contract changes).
+# Deploy from repo root: fly deploy
+# syntax=docker/dockerfile:1
+FROM node:20-bookworm-slim AS node-build
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
+RUN npm run build
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV ROSCA_POOL_WASM_PATH=/app/rosca_pool.wasm
+COPY backend/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=node-build /app/dist ./dist
+COPY artifacts/rosca_pool.wasm ./rosca_pool.wasm
+RUN mkdir -p data
+EXPOSE 3001
+CMD ["node", "dist/index.js"]

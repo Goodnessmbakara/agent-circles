@@ -1,0 +1,16 @@
+.git
+.github
+frontend
+node_modules
+backend/node_modules
+target
+.vite
+**/.DS_Store
+*.md
+docs
+.claude
+.cursor
+agent-tools
+mcps
+.env
+.env.local

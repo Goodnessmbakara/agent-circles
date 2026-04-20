@@ -1,3 +1,5 @@
+# Deprecated: production uses repo-root `Dockerfile.api` + `fly deploy` (includes `artifacts/rosca_pool.wasm`).
+# This file is kept for local experiments only.
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./

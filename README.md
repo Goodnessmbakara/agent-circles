@@ -4,11 +4,13 @@ Trustless **ROSCA** (rotating savings circle) on **Stellar / Soroban**: members 
 
 ## Repo layout
 
-| Path | Role |
-|------|------|
-| `contracts/rosca_pool/` | Soroban smart contract (Rust) |
-| `backend/` | Fastify API, keeper, Claude/Bedrock agent, Soroban RPC |
-| `frontend/` | Vite + React + TypeScript, Stellar Wallets Kit |
+
+| Path                    | Role                                                   |
+| ----------------------- | ------------------------------------------------------ |
+| `contracts/rosca_pool/` | Soroban smart contract (Rust)                          |
+| `backend/`              | Fastify API, keeper, Claude/Bedrock agent, Soroban RPC |
+| `frontend/`             | Vite + React + TypeScript, Stellar Wallets Kit         |
+
 
 ## Prerequisites
 
@@ -56,27 +58,28 @@ See `backend/.env.example` for the full list. Typical values include:
 ### Frontend (Vercel)
 
 - **Project name:** `agent-circles` (team: **Goodness' projects**).
-- **Git:** connected to **https://github.com/Goodnessmbakara/agent-circles**, production branch **`main`** (deploys on push).
-- **Monorepo:** in Vercel → **Project → Settings → General**, set **Root Directory** to **`frontend`**. If this is empty, Vercel builds from the repo root and will not find the Vite app.
+- **Git:** connected to **[https://github.com/Goodnessmbakara/agent-circles](https://github.com/Goodnessmbakara/agent-circles)**, production branch `**main`** (deploys on push).
+- **Monorepo:** in Vercel → **Project → Settings → General**, set **Root Directory** to `**frontend`**. If this is empty, Vercel builds from the repo root and will not find the Vite app.
 - Production build: **Vite** (`pnpm run build` from that root directory).
-- **Routing:** `frontend/vercel.json` rewrites browser requests to `/api/*` to the **Fly.io** API so the SPA can call same-origin `/api/...` in production.
+- **Routing:** `frontend/vercel.json` rewrites browser requests to `/api/`* to the **Fly.io** API so the SPA can call same-origin `/api/...` in production.
 
 ```json
 "destination": "https://agent-circles-api.fly.dev/api/:path*"
 ```
 
-- After a **push to `main`** (with Git connected), Vercel deploys production. Project URLs follow the usual `*.vercel.app` pattern for your team (e.g. `agent-circles-<team>.vercel.app`). You can add **`agent-circles.vercel.app`** under **Project → Settings → Domains** if the slug is available.
+- After a **push to `main`** (with Git connected), Vercel deploys production. Project URLs follow the usual `*.vercel.app` pattern for your team (e.g. `agent-circles-<team>.vercel.app`). You can add `**agent-circles.vercel.app**` under **Project → Settings → Domains** if the slug is available.
 
 ### Backend (Fly.io)
 
-- **App:** `agent-circles-api` — see `backend/fly.toml` and `backend/Dockerfile`.
+- **App:** `agent-circles-api` — see root `fly.toml` and `Dockerfile.api` (deploy from repo root: `fly deploy`).
+- **Pool WASM:** `artifacts/rosca_pool.wasm` is checked in for the deploy image. After changing `contracts/rosca_pool`, rebuild with `cargo build -p rosca-pool --release --target wasm32v1-none` and copy `target/wasm32v1-none/release/rosca_pool.wasm` to `artifacts/rosca_pool.wasm`.
 - **Health:** `GET https://agent-circles-api.fly.dev/health` → `{"status":"ok"}`.
 
 Set Fly secrets / env to mirror `backend/.env` (RPC, keys, contract IDs, LLM provider).
 
 ### GitHub
 
-- Source: **https://github.com/Goodnessmbakara/agent-circles**
+- Source: **[https://github.com/Goodnessmbakara/agent-circles](https://github.com/Goodnessmbakara/agent-circles)**
 
 ## Notes
 

@@ -18,13 +18,13 @@ export const config = {
   awsAccessKeyId: env("AWS_ACCESS_KEY_ID", ""),
   awsSecretAccessKey: env("AWS_SECRET_ACCESS_KEY", ""),
   /**
-   * US cross-region inference profile (CRIS). Claude 3.5 Sonnet profiles were retired;
-   * default is Sonnet 4.5 per AWS migration docs.
+   * On-demand model ID for the region (not the `us.` / `global.` inference profile ARN).
+   * Cross-region profiles can be retired independently; use current IDs from:
    * @see https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html
    */
   bedrockModelId: env(
     "BEDROCK_MODEL_ID",
-    "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "anthropic.claude-sonnet-4-6",
   ),
   /** Lower = faster responses / less verbosity. Typical chat: 256–1024. */
   agentMaxTokens: Math.min(

@@ -6,7 +6,9 @@ import { useSubmitTx } from "../hooks/use-tx";
 import { friendbotUrl } from "../lib/stellar";
 import { formatSubmitError } from "../lib/format-submit-error";
 
+/** `round_period` is seconds on-chain. Short values = faster rounds for testnet / keeper demos. */
 const PERIOD_OPTIONS = [
+  { label: "30 seconds (fast demo)", value: 30 },
   { label: "1 minute (demo)", value: 60 },
   { label: "1 hour", value: 3600 },
   { label: "1 day", value: 86400 },
@@ -28,7 +30,7 @@ export function CreatePool() {
   /** Server-side automation: keeper submits advance_round when rules allow (separate from chat assistant). */
   const [keeperEnabled, setKeeperEnabled] = useState(true);
   const [contribution, setContribution] = useState("10");
-  const [period, setPeriod] = useState(60);
+  const [period, setPeriod] = useState(30);
   const [maxMembers, setMaxMembers] = useState(5);
   const [feeBps, setFeeBps] = useState(200);
   const [loading, setLoading] = useState(false);
@@ -212,6 +214,9 @@ export function CreatePool() {
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                  <p className="mt-1.5 text-xs text-zinc-500">
+                    Use 30s or 1m on testnet to watch the keeper advance rounds quickly; longer periods for production-like runs.
+                  </p>
                 </div>
 
                 <div>
