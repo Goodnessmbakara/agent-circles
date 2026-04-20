@@ -67,43 +67,70 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
         />
       )}
 
-      {/* Drawer */}
+      {/* Drawer — inset below app header (60px) and above bottom; not full viewport height */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 w-[380px] flex flex-col
-          bg-[#0e0e10] border-l border-white/[0.07]
-          transition-transform duration-300 ease-in-out
+        className={`fixed right-0 z-50 w-[min(100vw,400px)] flex flex-col min-h-0
+          top-[60px] bottom-4
+          max-md:bottom-[calc(4rem+0.75rem+env(safe-area-inset-bottom,0px))]
+          rounded-l-2xl border border-white/[0.06] border-r-0 overflow-hidden
+          bg-gradient-to-b from-surface-1 via-[#0a0a0c] to-surface-0
+          shadow-[-16px_0_48px_rgba(0,0,0,0.55)]
+          transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
           ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-brand-500/15 border border-brand-500/25 flex items-center justify-center">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="text-brand-400">
-                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.4"/>
-                <circle cx="6.5" cy="6.5" r="2" fill="currentColor"/>
-              </svg>
+        {/* Header — starts below main site header; no extra safe-area-top here */}
+        <div className="relative shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-brand-500/[0.06] to-transparent">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/25 to-transparent" />
+          <div className="px-4 pb-3 pt-3 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/25 to-brand-600/10
+                  border border-brand-500/30 shadow-sm flex items-center justify-center flex-shrink-0"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-brand-300" aria-hidden>
+                  <path
+                    d="M3.5 4.5C3.5 3.67 4.17 3 5 3h8c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-2.8L9 16.5V13H5c-.83 0-1.5-.67-1.5-1.5v-7z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                  <p className="text-[15px] font-semibold text-zinc-100 tracking-tight">Assistant</p>
+                  <span
+                    className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md
+                      bg-white/[0.06] text-zinc-500 border border-white/[0.08]"
+                  >
+                    Claude
+                  </span>
+                </div>
+                <p className="text-[12px] text-zinc-500 mt-1 leading-snug">
+                  Chat help for pools — not on-chain automation
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-200">Assistant</p>
-              <p className="text-[11px] text-zinc-500 -mt-0.5 leading-snug">
-                Chat help for pools — not on-chain automation
-              </p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">Powered by Claude</p>
-            </div>
-          </div>
 
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M2 2L11 11M11 2L2 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close assistant"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-500
+                hover:text-zinc-200 hover:bg-white/[0.07] active:bg-white/[0.1] transition-colors cursor-pointer flex-shrink-0"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-1">
+        {/* Messages — min-h-0 so flex allows this region to shrink and scroll (see CSS flex min-height:auto) */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-3 space-y-4
+            bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(99,102,241,0.07)_0%,transparent_55%)]"
+        >
           {messages.map((msg, i) => (
             <ChatMessage
               key={i}
@@ -115,17 +142,17 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
           ))}
 
           {loading && (
-            <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
-              <span className="flex gap-1">
+            <div className="flex items-center gap-3 pl-10 py-1">
+              <span className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-bounce"
-                    style={{ animationDelay: `${i * 120}ms` }}
+                    className="w-2 h-2 rounded-full bg-brand-400/70 animate-bounce"
+                    style={{ animationDelay: `${i * 140}ms` }}
                   />
                 ))}
               </span>
-              <span className="text-xs text-zinc-600">Thinking…</span>
+              <span className="text-xs text-zinc-500 font-medium">Thinking…</span>
             </div>
           )}
 
@@ -133,7 +160,7 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-white/[0.07]">
+        <div className="shrink-0 px-4 pt-3 pb-3 border-t border-white/[0.06] bg-surface-0/80 backdrop-blur-md">
           <ChatInput onSend={handleSend} disabled={loading} />
         </div>
       </div>

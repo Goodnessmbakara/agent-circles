@@ -1,8 +1,8 @@
 # Agent Circles — Product Requirements Document
 
-**Version:** 1.0
-**Date:** 2026-04-09
-**Status:** Draft — MVP / Stellar Hackathon Build
+**Version:** 1.1  
+**Date:** 2026-04-19  
+**Status:** Living — reflects implemented MVP + roadmap (codebase-aligned)
 
 ---
 
@@ -15,26 +15,28 @@ Rotating Savings and Credit Associations (ROSCAs) — known as *ajo*, *susu*, *c
 
 Blockchain solves (1) — funds are locked in a contract with deterministic rules. But raw contract interfaces are hostile to the communities that actually use ROSCAs. They need **guidance**, **reminders**, and **operational management** — not a block explorer.
 
-**Agent Circles** solves both problems: **on-chain enforcement** for trust, **AI agents** for coordination.
+**Agent Circles** solves both problems: **on-chain enforcement** for trust, a **keeper service** for permissionless round automation, and an **LLM assistant** (optional UX) for explanations, pool lookup, and join prep — not a single ambiguous “agent.”
 
 ---
 
 ## 2. Target Users
 
-### Primary: Informal Savings Groups (via agent onboarding)
+### Primary: Informal Savings Groups (wallet + Assistant UX)
+
 - People already participating in ROSCAs (ajo, susu, tanda, chit)
 - Comfortable with mobile wallets but not Solidity/Soroban
 - Need: trust, transparency, someone to "run" the circle
 
 ### Secondary: Crypto-Native Groups
+
 - Friends splitting costs, DAOs running treasury rounds
 - Comfortable with wallets and contract interaction
 - Need: automation, on-chain record, fee-earning for organizers
 
-### Tertiary: Agent Operators
-- Developers or power users who deploy agents to manage pools
-- Earn manager fees for providing coordination services
-- Need: tools, dashboards, fee visibility
+### Tertiary: Organizers & integrators
+
+- People who run multiple circles and want **fee visibility**, **keeper automation**, and clear member UX
+- Need: dashboards (post-MVP), registry labels, optional **keeper** opt-out per pool
 
 ### User Personas
 
@@ -42,23 +44,80 @@ Blockchain solves (1) — funds are locked in a contract with deterministic rule
 
 **Tunde (Organizer):** Runs 3 different ajo groups. Spends hours tracking who paid. Wants automation and fair compensation for his coordination work.
 
-**Dev (Agent Operator):** Deploys an AI agent that manages 10 pools simultaneously. The agent earns 2% fees on each payout. Dev monitors via dashboard.
+**Dev (Builder/organizer):** Runs several pools; relies on **keeper** for round advancement and **Assistant** for member questions; may collect **manager fees** per on-chain rules. May use a future operator dashboard.
 
 ---
 
 ## 3. Product Vision & Goals
 
 ### Vision
-The simplest way to run a trustless savings circle — where the rules are code, the coordinator is an agent, and the money never leaves the chain until it's your turn.
+
+The simplest way to run a trustless savings circle — where the rules are code, **round advancement can be automated by a keeper**, **members get an Assistant for questions and join help**, and funds follow deterministic on-chain rules.
 
 ### Goals (MVP / Hackathon)
 
-| # | Goal | Metric |
-|---|------|--------|
-| G1 | Demonstrate end-to-end ROSCA on Soroban | Complete cycle: create → join → contribute × N rounds → payout |
-| G2 | Show agent as economic actor | Agent creates pool, manages rounds, earns fee — visible on-chain |
-| G3 | Prove agent adds value beyond contract | Agent handles reminders, explains mechanics, builds txs for users |
-| G4 | Working testnet demo for judges | 5-member pool completes full rotation in < 15 min demo |
+
+| #   | Goal                                               | Metric                                                                                 |
+| --- | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| G1  | Demonstrate end-to-end ROSCA on Soroban            | Complete cycle: create → join → contribute × N rounds → payout                         |
+| G2  | Show **keeper** as on-chain automation             | `advance_round` submitted by `AGENT_SECRET_KEY` when rules allow — visible in explorer |
+| G3  | Prove **assistant** adds value beyond the contract | Explains mechanics, lists pools, prepares join (unsigned XDR), schedules reminders     |
+| G4  | Working testnet demo for judges                    | Pool completes rotation in bounded demo time                                           |
+
+
+### What we are building (current scope)
+
+**Product shape:** Web app (**Vite + React + TypeScript**), **Fastify** backend, **Soroban** smart contract (`rosca_pool` / deployed WASM per pool instance), **Stellar testnet** (default asset: testnet **USDC** Stellar Asset Contract).
+
+**On-chain:** Each pool is a **contract instance** (`C…`). The contract enforces contribution amount, schedule, member set, fixed payout order, manager fee (basis points), and vault asset. Members **join** and **contribute**; when conditions are satisfied, `**advance_round`** pays the round recipient (minus manager fee) and advances state. Queries expose config, state, members, rounds, and fees.
+
+**Off-chain registry (backend):** Deployed contract IDs are stored in a **file-backed registry** (`data/registry.json`) with optional **display name** and per-pool `**keeper_enabled`** (default `true`). This metadata is **not** on-chain; it drives the app’s pool list, labels, and whether the **keeper** attempts automated `advance_round` for that pool.
+
+**Pool creation (implemented direction):** The user **connects a wallet** and completes **deploy + initialize + register** in one flow: backend-assisted **WASM upload** and **contract create** (user-signed transactions), then **initialize** on the new contract ID, then **POST /api/pools/register** with optional name and `keeper_enabled`. No separate “paste contract ID” step is the long-term UX target once deploy is wired end-to-end in the client.
+
+**Demo mode:** Backend routes can seed test accounts and run scripted scenarios (`/api/demo/*`) for presentations.
+
+---
+
+### Agent roles (terminology — read this before “agent” in user stories)
+
+The word **agent** is overloaded. In this PRD we use three precise roles:
+
+#### A. Keeper (automation service — **not** the LLM)
+
+
+|                    |                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **What**           | Background service that signs **permissionless** `advance_round` (and delivers **due reminders** from the server queue).  |
+| **Where**          | `backend/src/services/keeper.ts`                                                                                          |
+| **Identity**       | Dedicated Stellar keypair: `AGENT_SECRET_KEY` (public key derived for inclusion in txs).                                  |
+| **When it runs**   | On an interval (~15s) if `AGENT_SECRET_KEY` is configured; skips pools with `keeper_enabled === false` or inactive state. |
+| **Chain effect**   | Submits signed transactions; pays network fees from the keeper account.                                                   |
+| **What it is not** | Not conversational AI; does not read chat; does not sign **user** fund movements.                                         |
+
+
+#### B. Pool assistant (LLM — product UI: **“Assistant”**)
+
+
+|                    |                                                                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **What**           | Conversational layer: answers questions, calls **tools** to read pool state, prepares **unsigned** join transactions, schedules **off-chain** reminders.  |
+| **Where**          | `backend/src/agent/*`; HTTP `POST /api/agent/chat` (Claude via **AWS Bedrock** or **Anthropic** API).                                                     |
+| **Identity**       | No Stellar keypair. No custody.                                                                                                                           |
+| **Chain effect**   | **Read-only** via tools; **prepare_join** returns unsigned XDR **or** UI actions (`open_join`). User must sign in wallet.                                 |
+| **What it is not** | Not “autonomous on-chain agent” in the Stellar **agentic payments** sense; not the round **keeper**. Branded **Assistant** in the UI to reduce confusion. |
+
+
+#### C. User (human + wallet)
+
+
+|                  |                                                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **What**         | Connects **Freighter** (etc.) via stellar-wallets-kit; signs all txs that move user funds and pool creation txs. |
+| **Chain effect** | Sole signer for join, contribute, deploy/initialize, and any user-initiated operations.                          |
+
+
+**Manager / fees:** The contract’s **manager** (and fee accrual) are set in **on-chain pool config** — typically the creator’s address or a designated manager. The **keeper** key is only for calling permissionless maintenance (`advance_round`); it is **not** automatically “the manager” unless configured that way in the contract. Fee **claim** flows may exist in the contract but are **not** exposed as LLM tools in the current build.
 
 ---
 
@@ -67,51 +126,65 @@ The simplest way to run a trustless savings circle — where the rules are code,
 ### Epic 1: Pool Lifecycle
 
 **US-1.1** As a user, I want to create a savings pool with fixed terms (amount, period, members, fee) so everyone knows the rules upfront.
+
 - Acceptance: Pool created on-chain with correct params; visible in pool list.
 
 **US-1.2** As a user, I want to join an open pool so I can participate in the savings circle.
+
 - Acceptance: User address added to member list on-chain; pool activates when full.
 
 **US-1.3** As a member, I want to contribute my fixed amount each round so I fulfill my obligation.
+
 - Acceptance: USDC transferred to contract vault; contribution recorded per-round per-member.
 
 **US-1.4** As the round recipient, I want to receive the full pot (minus fee) when all contributions are in.
+
 - Acceptance: Payout transferred from vault to recipient on-chain; round advances.
 
 **US-1.5** As a member, I want to see pool status (round, who paid, who's next, countdown) so I can track progress.
+
 - Acceptance: Pool detail screen shows real-time state from chain.
 
-### Epic 2: Agent Coordination
+### Epic 2: Assistant & keeper coordination
 
-**US-2.1** As a user, I want an AI assistant that explains how the pool works and answers my questions.
-- Acceptance: Agent chat responds accurately about pool mechanics, my status, and next actions.
+**US-2.1** As a user, I want an **Assistant** (LLM) that explains how the pool works and answers my questions.
 
-**US-2.2** As a user, I want the agent to build transactions for me so I only need to review and sign.
-- Acceptance: Agent proposes tx; I see simulation result; I sign with wallet; tx submits.
+- Acceptance: Chat responds accurately using **tool-backed** pool data (not fabricated balances).
 
-**US-2.3** As a pool, I want round advancement to happen automatically without a member manually triggering it.
-- Acceptance: Agent (or keeper) calls `advance_round` when conditions are met.
+**US-2.2** As a user, I want the **Assistant** to prepare my **join** transaction so I only review and sign.
 
-**US-2.4** As a user, I want reminders before my contribution is due.
-- Acceptance: Agent sends notification (in-app or via chat) before round deadline.
+- Acceptance: `prepare_join` returns unsigned XDR or an **open join page** action; user signs in wallet; app submits.
 
-### Epic 3: Agent as Economic Actor
+**US-2.3** As a pool operator, I want **round advancement** to happen without a member manually calling it when possible.
 
-**US-3.1** As an agent operator, I want my agent to create and manage pools, earning a declared fee.
-- Acceptance: Agent address registered as manager; fee % stored on-chain; fee paid on each payout.
+- Acceptance: **Keeper** signs and submits `advance_round` when the contract accepts it; pools may opt out via `**keeper_enabled`**.
+
+**US-2.4** As a user, I want **reminders** before my contribution is due.
+
+- Acceptance: User or assistant schedules a reminder via `**schedule_reminder`**; **keeper** loop delivers due reminders (MVP: server log; not push notifications).
+
+### Epic 3: Economics & manager role
+
+**US-3.1** As a pool creator, I want to set a **manager fee** and have it enforced by the contract on payouts.
+
+- Acceptance: Fee bps stored at initialization; visible in pool detail; enforced on-chain (not by the LLM).
 
 **US-3.2** As a pool member, I want the manager fee to be transparent and immutable after pool creation.
+
 - Acceptance: Fee visible in pool detail; cannot be changed after creation; enforced by contract.
 
-**US-3.3** As an agent operator, I want to see fees earned across all managed pools.
-- Acceptance: Operator dashboard shows total fees, per-pool breakdown, recent payouts.
+**US-3.3** As an organizer, I want to see **fee summary** information for known pools.
+
+- Acceptance: Backend + assistant tools expose **aggregated fee info** where implemented; full operator dashboard is post-MVP.
 
 ### Epic 4: Wallet & Auth
 
 **US-4.1** As a user, I want to connect my Stellar wallet (Freighter, xBull, etc.) to interact with the app.
+
 - Acceptance: Wallet connects; address displayed; network = Testnet.
 
 **US-4.2** As a user, I want to sign transactions in my wallet (never expose my key to the app).
+
 - Acceptance: All signing happens in wallet extension; app never sees private key.
 
 ---
@@ -120,64 +193,80 @@ The simplest way to run a trustless savings circle — where the rules are code,
 
 ### 5.1 Screens
 
-| # | Screen | Description | Priority |
-|---|--------|-------------|----------|
-| S1 | Landing | Problem/solution pitch, "Open App" CTA | P0 |
-| S2 | Connect Wallet | Freighter / multi-wallet via stellar-wallets-kit; show address | P0 |
-| S3 | Pool List | User's pools + discoverable test pools | P0 |
-| S4 | Create Pool | Form: amount, period, max members, fee %, manager (self/agent), asset | P0 |
-| S5 | Pool Detail | Status, members, current round, countdown, contribute CTA, history | P0 |
-| S6 | Join Pool | Confirm terms; submit join tx | P0 |
-| S7 | Contribute | Fixed amount; tx simulation preview; sign + submit | P0 |
-| S8 | Payout | "Eligible for payout" indicator; trigger payout tx | P0 |
-| S9 | Transaction History | List of all pool txs with explorer links | P1 |
-| S10 | Agent Chat Panel | Copilot drawer; natural language interaction; shows planned tx | P0 |
-| S11 | Agent Settings | Toggle reminders; delegate limited rights | P1 |
-| S12 | Operator Dashboard | Pools managed, fees earned, alerts (if logged in as agent) | P1 |
-| S13 | Settings | Network, RPC endpoint, disconnect wallet | P2 |
-| S14 | Help / FAQ | ROSCA explainer, testnet disclaimer | P2 |
-| S15 | Demo Mode | One-click seed 5 test accounts via Friendbot | P0 |
 
-### 5.2 Agent Tools (API Surface)
+| #   | Screen                  | Description                                                                                                                          | Priority |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| S1  | Landing                 | Problem/solution pitch, "Open App" CTA                                                                                               | P0       |
+| S2  | Connect Wallet          | Freighter / multi-wallet via stellar-wallets-kit; show address                                                                       | P0       |
+| S3  | Pool List               | User's pools + discoverable test pools                                                                                               | P0       |
+| S4  | Create Pool             | Form + **deploy/register** flow: WASM upload + create + initialize + registry (name, **automate round advances** = `keeper_enabled`) | P0       |
+| S5  | Pool Detail             | Status, members, current round, countdown, contribute CTA, history                                                                   | P0       |
+| S6  | Join Pool               | Confirm terms; submit join tx                                                                                                        | P0       |
+| S7  | Contribute              | Fixed amount; tx simulation preview; sign + submit                                                                                   | P0       |
+| S8  | Payout                  | "Eligible for payout" indicator; trigger payout tx                                                                                   | P0       |
+| S9  | Transaction History     | List of all pool txs with explorer links                                                                                             | P1       |
+| S10 | Assistant (chat drawer) | LLM chat; tool-backed replies; **join** actions from `{ reply, actions }`; not streaming in current API                              | P0       |
+| S11 | Agent Settings          | Toggle reminders; delegate limited rights                                                                                            | P1       |
+| S12 | Operator Dashboard      | Pools managed, fees earned, alerts (if logged in as agent)                                                                           | P1       |
+| S13 | Settings                | Network, RPC endpoint, disconnect wallet                                                                                             | P2       |
+| S14 | Help / FAQ              | ROSCA explainer, testnet disclaimer                                                                                                  | P2       |
+| S15 | Demo Mode               | One-click seed 5 test accounts via Friendbot                                                                                         | P0       |
 
-| Tool | Description | Chain Effect |
-|------|-------------|--------------|
-| `list_pools` | Query indexed pools | Read-only |
-| `get_pool` | Pool detail + member status | Read-only |
-| `create_pool` | Build create tx for user to sign | Creates pool on-chain |
-| `join_pool` | Build join tx for user to sign | Adds member on-chain |
-| `build_contribute_tx` | Build contribution tx for user to sign | Deposits USDC to vault |
-| `advance_round` | Agent calls directly (permissionless) | Triggers payout if conditions met |
-| `claim_manager_fee` | Agent claims earned fee | Transfers fee to agent address |
-| `schedule_reminder` | Set off-chain reminder | None (off-chain only) |
-| `get_member_status` | Check contribution status for a member | Read-only |
-| `explain_pool` | Generate explanation of pool terms | None |
 
-### 5.3 Agent Behavior Rules
+### 5.2 Assistant tools (LLM — `POST /api/agent/chat`)
 
-1. Agent NEVER signs transactions that move user funds. It only builds unsigned txs.
-2. Agent CAN sign keeper transactions (advance_round) with its own keypair.
-3. Agent CAN claim its own manager fees from pools it manages.
-4. Agent MUST show the user what a transaction will do before requesting signature.
-5. Agent MUST NOT fabricate pool data — always query chain/index first.
-6. Agent SHOULD explain ROSCA mechanics when asked, using pool-specific context.
+These are the **only** tools wired to the pool assistant today (`backend/src/agent/tools.ts` + `tool-executor.ts`):
+
+
+| Tool                | Description                                                                             | Chain / side effect           |
+| ------------------- | --------------------------------------------------------------------------------------- | ----------------------------- |
+| `list_pools`        | List pool contract IDs from the **off-chain registry**                                  | Read-only                     |
+| `get_pool`          | Pool config, state, members, rounds, fees (from RPC/simulation)                         | Read-only                     |
+| `get_wallet_pools`  | Find pools where a given **G…** address is a member                                     | Read-only                     |
+| `get_fee_summary`   | Aggregate manager fee info across registered pools                                      | Read-only                     |
+| `prepare_join`      | Build **unsigned** join XDR for connected wallet, or return **navigate to join** action | No server signing; user signs |
+| `schedule_reminder` | Queue a **server-side** reminder (delivered by keeper cycle; MVP logs)                  | Off-chain queue only          |
+
+
+**Not exposed to the LLM:** `advance_round`, contribute/build tx, pool creation, fee claim — those are **user flows** in the app or **keeper** automation, not chat tools.
+
+### 5.3 Behavior rules (keeper vs assistant)
+
+**Assistant (LLM)**  
+
+1. **Never** holds or uses a private key; **never** signs transactions.
+2. **Never** fabricates balances — tools must read chain/registry.
+3. **May** return `actions` for the UI (e.g. open join, sign prepared XDR).
+4. **Should** explain ROSCA mechanics using pool context when asked.
+
+**Keeper (background service)**  
+
+1. **May** sign only with `**AGENT_SECRET_KEY`**, for **permissionless** operations (principally `**advance_round`**).
+2. **Does not** sign user fund movements.
+3. **Respects** per-pool `**keeper_enabled`** in the registry.
+4. **Delivers** due reminders from the reminder queue (MVP: log; production could be push/email).
+
+**User**  
+
+1. **Signs** all transactions that move their own funds and any **pool creation / deploy** steps via the wallet.
 
 ---
 
 ## 6. Technical Architecture Summary
 
-See **SRS** for full detail. Summary:
+See **SRS** if present for full detail. Summary:
 
 ```
 Frontend (Vite + React/TS)
-    ↓ REST/WebSocket
-Backend (Node/Fastify/TS)
-    ↓ Soroban RPC + Horizon
-Stellar Network (Testnet)
-    ↕ Soroban Contract (Rust)
-    ↕ USDC (SAC) + XLM
+    ↓ REST (/api/*)
+Backend (Node / Fastify / TS)
+    ├→ Soroban RPC + Horizon (reads, tx build, submit)
+    ├→ Keeper loop (AGENT_SECRET_KEY) → sign advance_round, deliver reminders
+    └→ Assistant (Bedrock / Anthropic) → tool calls → same read/build helpers (no key)
 
-Agent (Claude API + Tools) → Backend API → Soroban RPC
+Stellar Testnet
+    ↕ rosca_pool WASM (Rust / Soroban)
+    ↕ Asset: USDC SAC (testnet default) or configured SAC
 ```
 
 ### Frontend Decision: Vite + React/TypeScript
@@ -185,13 +274,15 @@ Agent (Claude API + Tools) → Backend API → Soroban RPC
 **Evaluated:** Vite+React/TS, SvelteKit, HTMX
 **Winner:** Vite + React/TypeScript (9.35/10 weighted score)
 
-| Factor | Vite+React | SvelteKit | HTMX |
-|--------|-----------|-----------|------|
-| Stellar wallet libs | First-class | Manual wrapping | Incompatible |
-| Stellar examples | All official examples | None | None |
-| Agent chat UI | Rich ecosystem | Good | Incompatible |
-| Hackathon velocity | Highest | Moderate | Poor |
-| TypeScript + SDK types | Native | Good | N/A |
+
+| Factor                 | Vite+React            | SvelteKit       | HTMX         |
+| ---------------------- | --------------------- | --------------- | ------------ |
+| Stellar wallet libs    | First-class           | Manual wrapping | Incompatible |
+| Stellar examples       | All official examples | None            | None         |
+| Agent chat UI          | Rich ecosystem        | Good            | Incompatible |
+| Hackathon velocity     | Highest               | Moderate        | Poor         |
+| TypeScript + SDK types | Native                | Good            | N/A          |
+
 
 **Rationale:** Every Stellar example dApp, scaffold tool, and wallet library is React-first. SvelteKit is a good framework but has zero Stellar ecosystem support. HTMX is architecturally incompatible with client-side wallet signing and streaming chat UIs. For a 1-week hackathon, ecosystem alignment is decisive.
 
@@ -204,29 +295,34 @@ Agent (Claude API + Tools) → Backend API → Soroban RPC
 ### Phase 1: MVP (Hackathon Week)
 
 **Contract:**
+
 - Single `rosca_pool` contract: initialize, join, contribute, advance_round, claim (payout), manager fee
 - Fixed rotation order (set at creation)
 - USDC (testnet SAC) as sole asset
 - Manager fee capped at pool creation (max 5%)
 
 **Frontend:**
+
 - Screens S1-S8, S10, S15 (P0 items)
 - Wallet connect via stellar-wallets-kit (Freighter primary)
-- Agent chat drawer with streaming responses
+- Assistant chat drawer (non-streaming API) with tool-backed responses
 - Pool dashboard with live state from chain
 
 **Backend:**
-- Transaction builder (prepare → return unsigned XDR)
-- Pool indexer (cache chain state for fast reads)
-- Agent tool endpoints (10 tools)
-- Reminder queue (in-memory or simple DB)
 
-**Agent:**
-- Claude tool-use with 10 tools
-- Explains pools, builds txs, triggers round advancement
-- Earns manager fee on managed pools
+- Transaction builder (prepare → return unsigned XDR; deploy/upload/create helpers as implemented)
+- Pool registry file + **pool-api** normalization for JSON (e.g. BigInt-safe DTOs)
+- Assistant: **7 tools** (see §5.2); `POST /api/agent/chat` returns `{ reply, actions }`
+- **Keeper** interval + **reminder** queue (in-memory MVP)
+- Raw `**getTransaction`** polling where needed for Soroban meta compatibility
+
+**Assistant + keeper:**
+
+- **Assistant:** Claude tool-use; read + `prepare_join` + reminders only
+- **Keeper:** signs `**advance_round`** only (not user txs); does not “earn” by default — **manager fee** accrues per **contract config**
 
 **Demo:**
+
 - Friendbot-funded test accounts
 - Pre-seeded pool with 5 members
 - Scripted full rotation for live demo
@@ -254,36 +350,52 @@ Agent (Claude API + Tools) → Backend API → Soroban RPC
 
 ## 8. Success Metrics (Hackathon)
 
-| Metric | Target |
-|--------|--------|
-| Full ROSCA cycle on testnet | 5 members, N rounds, all payouts |
-| Agent creates + manages pool | End-to-end without human intervention for keeper duties |
-| Agent earns fee on-chain | Verifiable in explorer |
-| Demo time | < 15 minutes for full rotation |
-| Judge comprehension | "I understand what this does and why agents matter" |
+
+| Metric                                      | Target                                                                |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| Full ROSCA cycle on testnet                 | Members join, contribute, rounds advance, payouts visible             |
+| **Keeper** advances rounds when rules allow | Explorer shows `advance_round` from keeper account                    |
+| **Assistant** improves UX                   | Accurate pool Q&A + join prep without signing for users               |
+| Manager fee (if configured)                 | Accrued per contract; visible in pool/fee tools                       |
+| Demo time                                   | Bounded demo (scripted or manual)                                     |
+| Judge comprehension                         | Clear distinction: **keeper** = automation, **Assistant** = chat help |
+
 
 ---
 
 ## 9. Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Soroban contract bugs (reentrancy, storage) | Funds locked/lost on testnet | Reference Ahjoor + BreadchainCoop patterns; comprehensive unit tests |
-| Wallet integration complexity | Blocks frontend progress | Use stellar-wallets-kit (proven multi-wallet); start with Freighter only |
-| Agent hallucinating pool data | User makes bad decisions | Agent tools MUST query chain; never fabricate; show source tx |
-| Soroban RPC rate limits / instability | Demo fails | Cache aggressively; have fallback read from Horizon; test on testnet early |
-| Scope creep (DeFi treasury features) | Miss core ROSCA | Economy v1 = idle USDC only; no DeFi in MVP |
-| Contract storage TTL expiry | Pool state archived mid-rotation | Bump TTL on every interaction; set 60-day extend |
+
+| Risk                                        | Impact                           | Mitigation                                                                  |
+| ------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------- |
+| Soroban contract bugs (reentrancy, storage) | Funds locked/lost on testnet     | Reference Ahjoor + BreadchainCoop patterns; comprehensive unit tests        |
+| Wallet integration complexity               | Blocks frontend progress         | Use stellar-wallets-kit (proven multi-wallet); start with Freighter only    |
+| Assistant hallucinating pool data           | User makes bad decisions         | Tools MUST query chain/registry; system prompt forbids fabricating balances |
+| Soroban RPC rate limits / instability       | Demo fails                       | Cache aggressively; have fallback read from Horizon; test on testnet early  |
+| Scope creep (DeFi treasury features)        | Miss core ROSCA                  | Economy v1 = idle USDC only; no DeFi in MVP                                 |
+| Contract storage TTL expiry                 | Pool state archived mid-rotation | Bump TTL on every interaction; set 60-day extend                            |
+
 
 ---
 
 ## 10. Resolved Decisions (from Spec §10)
 
-### Decision 1: Who Signs What
-**Answer:** User wallet signs ALL transactions that move user funds. Agent builds unsigned XDR and presents for review. Agent has its own testnet keypair for permissionless keeper calls (advance_round) and claiming its own manager fees. On testnet, agent key is in environment variable.
+### Decision 1: Who signs what
 
-### Decision 2: Agent Identity
-**Answer:** Separate Stellar account. Contract-enforced role: `manager_agent`. Can call permissionless functions, earn declared fees (capped at creation), and call advance_round. Cannot move member funds or change pool terms.
+**Answer:** The **user’s wallet** signs every transaction that moves **user** funds, plus **deploy / initialize** for new pool instances. The **keeper** uses `**AGENT_SECRET_KEY`** only for **permissionless** txs (notably `**advance_round`**). The **assistant** never signs.
 
-### Decision 3: Rotation Fairness
-**Answer:** Fixed order determined at pool creation for MVP. Members see the order before joining. Agent can *suggest* an order (e.g., random shuffle) but the order is locked when the pool activates. Reordering and bidding are Phase 2 features.
+### Decision 2: Two “agents” — naming and responsibility
+
+**Answer:** **Keeper** = automated signer + reminder delivery (server). **Assistant** = LLM + tools (no key). Product UI calls the LLM **“Assistant”** so users do not confuse chat with on-chain automation. Stellar hackathon “Agentic AI” narratives (e.g. MPP/x402) are **not** in scope for MVP unless explicitly added later.
+
+### Decision 3: Keeper opt-out
+
+**Answer:** Each registered pool may set `**keeper_enabled: false`** so the backend **does not** auto-call `advance_round` for that pool (round advancement must be triggered manually or by another client).
+
+### Decision 4: Manager vs keeper
+
+**Answer:** **Manager fee** and **manager address** are defined **in the contract** at initialization. The keeper key is **not** automatically the fee recipient unless the pool was configured that way.
+
+### Decision 5: Rotation fairness
+
+**Answer:** Fixed order at pool creation for MVP. Reordering / bidding — Phase 2+.

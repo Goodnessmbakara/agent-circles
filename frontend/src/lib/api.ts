@@ -129,6 +129,32 @@ export interface AgentChatResponse {
   actions: AgentChatAction[];
 }
 
+export interface DemoAccount {
+  publicKey: string;
+  secretKey: string;
+  friendbotUrl: string;
+  explorerUrl: string;
+}
+
+export interface DemoSeedResult {
+  accounts: DemoAccount[];
+  note: string;
+}
+
+export interface DemoRunStep {
+  step: string;
+  status: "success" | "failed" | "skipped";
+  txHash?: string;
+  detail?: string;
+}
+
+export interface DemoRunResult {
+  accounts: DemoAccount[];
+  contractId: string;
+  steps: DemoRunStep[];
+  summary: string;
+}
+
 export const api = {
   listPools: () => request<Pool[]>("/pools"),
   getPool: (id: string) => request<PoolDetail>(`/pools/${id}`),
@@ -168,4 +194,6 @@ export const api = {
         ...(walletAddress ? { "x-wallet-address": walletAddress } : {}),
       },
     }),
+  seedDemo: () => request<DemoSeedResult>("/demo/seed", { method: "POST" }),
+  runDemo: () => request<DemoRunResult>("/demo/run", { method: "POST" }),
 };

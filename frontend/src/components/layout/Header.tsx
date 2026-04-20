@@ -81,8 +81,12 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Right side */}
+          {/* Right side — wallet first, assistant last */}
           <div className="flex items-center gap-2 ml-auto">
+            <ConnectButton />
+
+            <div className="h-5 w-px bg-white/[0.08]" aria-hidden />
+
             {/* Chat assistant (LLM help — not keeper / on-chain automation) */}
             <button
               type="button"
@@ -96,7 +100,6 @@ export function Header() {
               }`}
               style={agentOpen ? { background: "rgba(99,102,241,0.12)" } : {}}
             >
-              {/* Pulse when open */}
               {agentOpen && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
                   <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
@@ -112,11 +115,6 @@ export function Header() {
               </svg>
               Assistant
             </button>
-
-            {/* Divider */}
-            <div className="h-5 w-px bg-white/[0.08]" />
-
-            <ConnectButton />
           </div>
         </div>
       </header>
