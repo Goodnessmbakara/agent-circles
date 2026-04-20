@@ -1,9 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import fs from "fs/promises";
-import path from "path";
 import { z } from "zod";
 import { Address, hash, nativeToScVal, StrKey, xdr } from "@stellar/stellar-sdk";
 import { deriveCustomContractId } from "../stellar/contract-id.js";
+import { readRoscaWasmBuffer } from "../stellar/rosca-wasm.js";
 import { buildContractTx, buildCreateCustomContractTx, buildUploadWasmTx } from "../stellar/tx-builder.js";
 import { poolInfoToApi } from "../stellar/pool-api.js";
 import { getPoolInfo } from "../stellar/pool-reader.js";
@@ -46,21 +45,6 @@ function hexToBuffer(hex: string): Buffer {
   return Buffer.from(hex, "hex");
 }
 
-async function readRoscaWasm(): Promise<Buffer> {
-  const p = config.roscaPoolWasmPath;
-  const resolved = path.isAbsolute(p) ? p : path.resolve(process.cwd(), p);
-  try {
-    return await fs.readFile(resolved);
-  } catch {
-    throw Object.assign(
-      new Error(
-        `Pool WASM not found at ${resolved}. Build it with: stellar contract build --manifest-path contracts/rosca_pool/Cargo.toml`,
-      ),
-      { statusCode: 503 },
-    );
-  }
-}
-
 export async function poolRoutes(app: FastifyInstance) {
   // List all known pools with live on-chain state
   app.get("/pools", async () => {
@@ -84,7 +68,7 @@ export async function poolRoutes(app: FastifyInstance) {
 
   app.post("/pools/deploy/upload", async (request) => {
     const { source } = DeployUploadSchema.parse(request.body);
-    const wasm = await readRoscaWasm();
+    const wasm = await readRoscaWasmBuffer();
     const built = await buildUploadWasmTx({ sourceAddress: source, wasm });
     return {
       data: {
@@ -98,7 +82,7 @@ export async function poolRoutes(app: FastifyInstance) {
 
   app.post("/pools/deploy/create", async (request) => {
     const body = DeployCreateSchema.parse(request.body);
-    const wasm = await readRoscaWasm();
+    const wasm = await readRoscaWasmBuffer();
     const wasmHash = hash(wasm);
     const reqHash = hexToBuffer(body.wasm_hash.toLowerCase());
     if (!reqHash.equals(wasmHash)) {

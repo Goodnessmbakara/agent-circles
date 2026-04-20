@@ -3,6 +3,7 @@ import { buildContractTx } from "../stellar/tx-builder.js";
 import { submitSignedTx } from "../stellar/tx-submit.js";
 import { getPoolInfo } from "../stellar/pool-reader.js";
 import { config } from "../config.js";
+import { ensureDemoPoolContractId } from "./demo-pool-bootstrap.js";
 
 /** Soroban `Address` ScVal — must match `new Address(...).toScVal()` used in pool routes; `nativeToScVal(..., { type: "address" })` can trap the contract VM. */
 function memberAddressScVal(publicKey: string): xdr.ScVal {
@@ -99,8 +100,29 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function runFullDemo(): Promise<DemoRunResult> {
-  const contractId = config.demoContractId;
   const steps: DemoRunStep[] = [];
+  let contractId: string;
+
+  try {
+    const ensured = await ensureDemoPoolContractId();
+    contractId = ensured.contractId;
+    if (ensured.didBootstrap) {
+      steps.push({
+        step: "bootstrap_pool",
+        status: "success",
+        detail: `Auto-deployed pool (native token SAC default). Contract: ${contractId}`,
+      });
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      accounts: [],
+      contractId: config.demoContractId.trim() || "(none)",
+      steps: [{ step: "ensure_pool", status: "failed", detail: msg }],
+      summary:
+        "Demo aborted: no usable pool — set DEMO_CONTRACT_ID or DEMO_DEPLOYER_SECRET_KEY (see server env).",
+    };
+  }
 
   let poolInfo;
   try {
@@ -111,9 +133,8 @@ export async function runFullDemo(): Promise<DemoRunResult> {
     const detail = [
       `Cannot read contract ${contractId}: ${msg}`,
       "",
-      "Fix: set Fly secret DEMO_CONTRACT_ID to a pool that finished **Create Circle** in this app (upload WASM → create contract → **initialize**), on **Stellar testnet** (same as API).",
+      "If this ID was persisted or set manually, verify initialize completed on **Stellar testnet** (same as API).",
       `Inspect contract: ${explorer}`,
-      "If the contract was only deployed but initialize was skipped, complete initialize or create a new circle and paste the new C… ID.",
     ].join("\n");
     return {
       accounts: [],
@@ -125,7 +146,7 @@ export async function runFullDemo(): Promise<DemoRunResult> {
           detail,
         },
       ],
-      summary: "Demo aborted: pool not readable — usually uninitialized contract or wrong DEMO_CONTRACT_ID.",
+      summary: "Demo aborted: pool not readable — uninitialized contract or wrong network.",
     };
   }
 
@@ -209,7 +230,20 @@ export async function runFullDemo(): Promise<DemoRunResult> {
     await sleep(500);
   }
 
-  // Step 12: Advance the round (payout to member at position 0)
+  // Wait until ledger time passes round end (advance_round requires RoundNotElapsed to be false)
+  {
+    const fresh = await getPoolInfo(contractId);
+    const round = fresh.current_round;
+    const startSec = Number(fresh.config.start_time);
+    const periodSec = Number(fresh.config.round_period);
+    const roundEndSec = startSec + periodSec * (round + 1);
+    const waitMs = Math.max(0, roundEndSec * 1000 - Date.now() + 3000);
+    if (waitMs > 0) {
+      await sleep(waitMs);
+    }
+  }
+
+  // Advance the round (payout to member at position 0)
   {
     const stepName = "advance_round";
     try {
