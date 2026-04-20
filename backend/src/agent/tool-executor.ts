@@ -134,6 +134,21 @@ export async function executeTool(name: string, input: Record<string, any>, cont
               pool_id: poolId,
             });
           }
+          // join() only exists in Setup; after the pool is Active/Completed/Cancelled, simulation fails with WrongState.
+          if (info.state !== "Setup") {
+            return JSON.stringify({
+              error: `This pool is **${info.state}**, not Setup. New members can only join while the pool is still filling (Setup). Once it becomes Active, joining is closed.`,
+              pool_id: poolId,
+              state: info.state,
+              hint: "If the user needs access to an Active pool, they must have been added during Setup, or start a new pool.",
+            });
+          }
+          if (info.members.length >= info.config.max_members) {
+            return JSON.stringify({
+              error: "This pool is already full (max members reached).",
+              pool_id: poolId,
+            });
+          }
           if (wallet) {
             const result = await buildContractTx({
               contractId: poolId,

@@ -35,6 +35,8 @@ Pools move through these states:
 - **Completed** — all members have received a payout, pool is done
 - **Cancelled** — pool was cancelled before completing
 
+**Important:** On-chain \`join\` is only allowed in **Setup**. If a pool is already **Active** (or Completed/Cancelled), users **cannot** join anymore — say so clearly; do not imply the contract is broken.
+
 ## Amounts
 All on-chain amounts are in **stroops** (Stellar's smallest unit). To display human-readable values, **divide by 1,000,000** and show as USDC.
 Example: 10,000,000 stroops = 10.00 USDC

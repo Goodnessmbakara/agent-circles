@@ -33,9 +33,18 @@ function parseJsonBody(raw: string, status: number, ok: boolean): unknown {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers = new Headers(options?.headers);
+  const body = options?.body;
+  const hasJsonBody = typeof body === "string" && body.length > 0;
+  // Do not send application/json with an empty body — fetch throws:
+  // "Body cannot be empty when content-type is set to 'application/json'"
+  if (hasJsonBody && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
+    headers,
   });
 
   const raw = await res.text();
@@ -184,7 +193,10 @@ export const api = {
   buildContribute: (poolId: string, member: string) =>
     request<TxBuildResult>(`/pools/${poolId}/contribute`, { method: "POST", body: JSON.stringify({ member }) }),
   buildAdvance: (poolId: string) =>
-    request<TxBuildResult>(`/pools/${poolId}/advance`, { method: "POST" }),
+    request<TxBuildResult>(`/pools/${poolId}/advance`, {
+      method: "POST",
+      body: "{}",
+    }),
   submitTx: (signedXdr: string) =>
     request<TxSubmitResult>("/tx/submit", { method: "POST", body: JSON.stringify({ signed_xdr: signedXdr }) }),
   getTxStatus: (hash: string) =>
@@ -198,6 +210,9 @@ export const api = {
         ...(walletAddress ? { "x-wallet-address": walletAddress } : {}),
       },
     }),
-  seedDemo: () => request<DemoSeedResult>("/demo/seed", { method: "POST" }),
-  runDemo: () => request<DemoRunResult>("/demo/run", { method: "POST" }),
+  /** Empty JSON object — avoids clients that reject POST+JSON content-type with no body. */
+  seedDemo: () =>
+    request<DemoSeedResult>("/demo/seed", { method: "POST", body: "{}" }),
+  runDemo: () =>
+    request<DemoRunResult>("/demo/run", { method: "POST", body: "{}" }),
 };

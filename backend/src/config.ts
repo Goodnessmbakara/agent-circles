@@ -18,13 +18,13 @@ export const config = {
   awsAccessKeyId: env("AWS_ACCESS_KEY_ID", ""),
   awsSecretAccessKey: env("AWS_SECRET_ACCESS_KEY", ""),
   /**
-   * On-demand model ID for the region (not the `us.` / `global.` inference profile ARN).
-   * Cross-region profiles can be retired independently; use current IDs from:
+   * Bedrock: use an **inference profile** ID for on-demand (not the bare foundation model ID).
+   * Example US geo: `us.anthropic.claude-sonnet-4-6`; global: `global.anthropic.claude-sonnet-4-6`.
    * @see https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html
    */
   bedrockModelId: env(
     "BEDROCK_MODEL_ID",
-    "anthropic.claude-sonnet-4-6",
+    "us.anthropic.claude-sonnet-4-6",
   ),
   /** Lower = faster responses / less verbosity. Typical chat: 256–1024. */
   agentMaxTokens: Math.min(
