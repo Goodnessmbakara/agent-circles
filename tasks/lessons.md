@@ -1,0 +1,6 @@
+# Project lessons (don’t repeat)
+
+- **Never commit secrets or secret-shaped strings.** API keys, `sk-ant-…`, AWS `AKIA…`, Stellar `S…` secret keys, Claude/Anthropic keys, and long random tokens belong only in **environment variables**, **Fly/Vercel/Railway secrets**, or a local **`.env`** that stays **untracked**. Use **`backend/.env.example`** with empty placeholders only.
+- **Never `git add` machine-local tool config** such as **`.claude/settings.local.json`** (permissions, paths, one-off Bash allowlists). Those files are not part of the product and often contain **high-entropy strings** (e.g. long Stellar `C…` IDs in copied commands) that **GitGuardian** flags as “Generic High Entropy Secret.” Add them to **`.gitignore`** and remove from the index with `git rm --cached <file>`.
+- **Before every commit**, skim `git diff` for `.env`, keys, or pasted credentials. Prefer **`git add -p`** instead of blind `git add -A` when context is mixed.
+- **If something was pushed to GitHub:** treat it as **compromised** — **rotate/revoke** the credential (new key in the provider, rotate Fly secrets, etc.). A follow-up commit that deletes the file **does not** remove it from git history; use **history rewrite** (e.g. `git filter-repo`) or GitHub support docs only if you must purge the blob, and still **rotate** first.

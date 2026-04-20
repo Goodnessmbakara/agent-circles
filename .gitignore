@@ -6,6 +6,9 @@ target/
 .env.*
 !.env.example
 
+# IDE / agent local overrides (never commit — often trips secret scanners)
+.claude/settings.local.json
+
 # Dependencies and build output
 node_modules/
 dist/
