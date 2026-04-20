@@ -56,7 +56,9 @@ See `backend/.env.example` for the full list. Typical values include:
 ### Frontend (Vercel)
 
 - **Project name:** `agent-circles` (team: **Goodness' projects**).
-- Production build: **Vite** (`pnpm run build` in `frontend/`).
+- **Git:** connected to **https://github.com/Goodnessmbakara/agent-circles**, production branch **`main`** (deploys on push).
+- **Monorepo:** in Vercel → **Project → Settings → General**, set **Root Directory** to **`frontend`**. If this is empty, Vercel builds from the repo root and will not find the Vite app.
+- Production build: **Vite** (`pnpm run build` from that root directory).
 - **Routing:** `frontend/vercel.json` rewrites browser requests to `/api/*` to the **Fly.io** API so the SPA can call same-origin `/api/...` in production.
 
 ```json
