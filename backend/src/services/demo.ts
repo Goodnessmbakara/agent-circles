@@ -99,6 +99,18 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForRoundEnd(contractId: string, extraBufferMs = 3000): Promise<void> {
+  const fresh = await getPoolInfo(contractId);
+  const round = fresh.current_round;
+  const startSec = Number(fresh.config.start_time);
+  const periodSec = Number(fresh.config.round_period);
+  const roundEndSec = startSec + periodSec * (round + 1);
+  const waitMs = Math.max(0, roundEndSec * 1000 - Date.now() + extraBufferMs);
+  if (waitMs > 0) {
+    await sleep(waitMs);
+  }
+}
+
 export async function runFullDemo(): Promise<DemoRunResult> {
   const steps: DemoRunStep[] = [];
   let contractId: string;
@@ -231,17 +243,7 @@ export async function runFullDemo(): Promise<DemoRunResult> {
   }
 
   // Wait until ledger time passes round end (advance_round requires RoundNotElapsed to be false)
-  {
-    const fresh = await getPoolInfo(contractId);
-    const round = fresh.current_round;
-    const startSec = Number(fresh.config.start_time);
-    const periodSec = Number(fresh.config.round_period);
-    const roundEndSec = startSec + periodSec * (round + 1);
-    const waitMs = Math.max(0, roundEndSec * 1000 - Date.now() + 3000);
-    if (waitMs > 0) {
-      await sleep(waitMs);
-    }
-  }
+  await waitForRoundEnd(contractId, 3000);
 
   // Advance the round (payout to member at position 0)
   {
@@ -256,10 +258,32 @@ export async function runFullDemo(): Promise<DemoRunResult> {
         detail: "Round advanced — payout sent to member at position 0",
       });
     } catch (err) {
+      // On testnet, ledger/clock skew can briefly trigger RoundNotElapsed even after our local wait.
+      const firstErr = err instanceof Error ? err.message : String(err);
+      if (/RoundNotElapsed|Transaction failed on chain/i.test(firstErr)) {
+        try {
+          await waitForRoundEnd(contractId, 8000);
+          const callerKeypair = Keypair.fromSecret(accounts[0].secretKey);
+          const { txHash } = await callContract(contractId, "advance_round", [], callerKeypair);
+          steps.push({
+            step: stepName,
+            status: "success",
+            txHash,
+            detail: "Round advanced after retry (timing sync)",
+          });
+          // Retry succeeded; skip failure record.
+          const successCount = steps.filter((s) => s.status === "success").length;
+          const failedCount = steps.filter((s) => s.status === "failed").length;
+          const summary = `Demo completed: ${successCount} steps succeeded, ${failedCount} failed.`;
+          return { accounts, contractId, steps, summary };
+        } catch {
+          // Fall through to record original error payload below.
+        }
+      }
       steps.push({
         step: stepName,
         status: "failed",
-        detail: err instanceof Error ? err.message : String(err),
+        detail: firstErr,
       });
     }
   }
