@@ -217,7 +217,8 @@ export async function ensureDemoPoolContractId(): Promise<EnsureDemoPoolResult> 
   const contractId = await bootstrapDemoPool(deployer);
   await savePersistedContractId(contractId);
   if (!registry.has(contractId)) {
-    registry.register(contractId, "Autopilot demo pool", true);
+    // Disable keeper for demo-autopools to avoid racing demo's scripted advance_round step.
+    registry.register(contractId, "Autopilot demo pool", false);
   }
 
   return { contractId, didBootstrap: true };

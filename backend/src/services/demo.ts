@@ -244,6 +244,8 @@ export async function runFullDemo(): Promise<DemoRunResult> {
 
   // Wait until ledger time passes round end (advance_round requires RoundNotElapsed to be false)
   await waitForRoundEnd(contractId, 3000);
+  const beforeAdvance = await getPoolInfo(contractId);
+  const expectedRound = beforeAdvance.current_round;
 
   // Advance the round (payout to member at position 0)
   {
@@ -258,8 +260,26 @@ export async function runFullDemo(): Promise<DemoRunResult> {
         detail: "Round advanced — payout sent to member at position 0",
       });
     } catch (err) {
-      // On testnet, ledger/clock skew can briefly trigger RoundNotElapsed even after our local wait.
       const firstErr = err instanceof Error ? err.message : String(err);
+      // If keeper/another caller advanced in parallel, treat as success to keep demo deterministic.
+      try {
+        const after = await getPoolInfo(contractId);
+        if (after.current_round > expectedRound) {
+          steps.push({
+            step: stepName,
+            status: "success",
+            detail: "Round already advanced by another caller (keeper/parallel trigger).",
+          });
+          const successCount = steps.filter((s) => s.status === "success").length;
+          const failedCount = steps.filter((s) => s.status === "failed").length;
+          const summary = `Demo completed: ${successCount} steps succeeded, ${failedCount} failed.`;
+          return { accounts, contractId, steps, summary };
+        }
+      } catch {
+        // Keep original failure path below.
+      }
+
+      // On testnet, ledger/clock skew can briefly trigger RoundNotElapsed even after our local wait.
       if (/RoundNotElapsed|Transaction failed on chain/i.test(firstErr)) {
         try {
           await waitForRoundEnd(contractId, 8000);
