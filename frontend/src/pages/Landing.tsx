@@ -59,14 +59,6 @@ export function Landing() {
         />
 
         <div className="relative mx-auto max-w-3xl px-5">
-          {/* Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-500/20 bg-brand-500/8 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow" />
-            <span className="text-xs font-medium text-brand-400 tracking-wide">
-              Live on Stellar Testnet
-            </span>
-          </div>
-
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-zinc-50 leading-[1.1] mb-5">
             Savings circles,{" "}
             <span

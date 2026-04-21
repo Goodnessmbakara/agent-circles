@@ -58,8 +58,8 @@ export function Header() {
           {/* Divider */}
           <div className="h-5 w-px bg-white/[0.08]" />
 
-          {/* Nav */}
-          <nav className="hidden md:flex items-center gap-1 flex-1">
+          {/* Nav (clean underline + sketch split layout) */}
+          <nav className="hidden md:flex items-center gap-5 flex-1">
             {[
               { to: "/pools", label: "Pools" },
               { to: "/demo",  label: "Demo"  },
@@ -67,16 +67,18 @@ export function Header() {
               <Link
                 key={to}
                 to={to}
-                className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                className={`relative px-0 py-1 text-sm font-medium transition-colors duration-150 ${
                   isActive(to)
-                    ? "text-zinc-100 bg-white/[0.07]"
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
+                    ? "text-zinc-100"
+                    : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
                 {label}
-                {isActive(to) && (
-                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-indigo-400" />
-                )}
+                <span
+                  className={`absolute -bottom-1 left-0 h-[2px] rounded-full bg-indigo-400 transition-all duration-200 ${
+                    isActive(to) ? "w-full opacity-100" : "w-0 opacity-0"
+                  }`}
+                />
               </Link>
             ))}
           </nav>
