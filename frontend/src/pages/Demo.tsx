@@ -54,6 +54,8 @@ export function Demo() {
   const [error, setError] = useState<string | null>(null);
   const [seedResult, setSeedResult] = useState<DemoSeedResult | null>(null);
   const [runResult, setRunResult] = useState<DemoRunResult | null>(null);
+  const [liveSteps, setLiveSteps] = useState<DemoRunResult["steps"]>([]);
+  const [showFinalNarrative, setShowFinalNarrative] = useState(false);
 
   async function handleSeed() {
     setSeedLoading(true);
@@ -76,9 +78,32 @@ export function Demo() {
   async function handleRunDemo() {
     setRunLoading(true);
     setError(null);
+    setShowFinalNarrative(false);
+    setRunResult(null);
+    setLiveSteps([
+      { step: "fund_accounts", status: "skipped", detail: "Waiting for demo run to start..." },
+      { step: "join_member_0", status: "skipped", detail: "Pending" },
+      { step: "join_member_1", status: "skipped", detail: "Pending" },
+      { step: "join_member_2", status: "skipped", detail: "Pending" },
+      { step: "join_member_3", status: "skipped", detail: "Pending" },
+      { step: "join_member_4", status: "skipped", detail: "Pending" },
+      { step: "contribute_member_0", status: "skipped", detail: "Pending" },
+      { step: "contribute_member_1", status: "skipped", detail: "Pending" },
+      { step: "contribute_member_2", status: "skipped", detail: "Pending" },
+      { step: "contribute_member_3", status: "skipped", detail: "Pending" },
+      { step: "contribute_member_4", status: "skipped", detail: "Pending" },
+      { step: "advance_round", status: "skipped", detail: "Pending" },
+    ]);
     try {
       const data = await api.runDemo();
       setRunResult(data);
+      // Reveal results progressively so judges can follow the sequence step-by-step.
+      for (let i = 0; i < data.steps.length; i++) {
+        const upto = data.steps.slice(0, i + 1);
+        setLiveSteps(upto);
+        await new Promise((resolve) => setTimeout(resolve, 260));
+      }
+      setShowFinalNarrative(true);
       if (!seedResult) {
         setSeedResult({
           accounts: data.accounts,
@@ -98,19 +123,24 @@ export function Demo() {
     }
   }
 
+  const displaySteps = useMemo(() => {
+    if (runLoading) return liveSteps;
+    return runResult?.steps ?? liveSteps;
+  }, [runLoading, runResult, liveSteps]);
+
   const stepStats = useMemo(() => {
-    const steps = runResult?.steps ?? [];
+    const steps = displaySteps;
     return {
       total: steps.length,
       success: steps.filter((s) => s.status === "success").length,
       failed: steps.filter((s) => s.status === "failed").length,
       skipped: steps.filter((s) => s.status === "skipped").length,
     };
-  }, [runResult]);
+  }, [displaySteps]);
 
   const hasSuccessfulAdvance = useMemo(
-    () => runResult?.steps.some((s) => s.step === "advance_round" && s.status === "success") ?? false,
-    [runResult],
+    () => displaySteps.some((s) => s.step === "advance_round" && s.status === "success"),
+    [displaySteps],
   );
 
   return (
@@ -187,17 +217,20 @@ export function Demo() {
             </div>
           )}
 
-          {runResult && (
+          {(runResult || runLoading || liveSteps.length > 0) && (
             <div className="card p-6 mb-6">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-sm font-medium text-zinc-200">Run Results</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    Contract: <span className="font-mono text-zinc-400">{truncate(runResult.contractId, 12)}</span>
+                    Contract:{" "}
+                    <span className="font-mono text-zinc-400">
+                      {runResult?.contractId ? truncate(runResult.contractId, 12) : "Preparing..."}
+                    </span>
                   </p>
                 </div>
                 <span className="text-[11px] px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                  {stepStats.success}/{stepStats.total} success
+                  {runLoading ? "Running..." : `${stepStats.success}/${stepStats.total} success`}
                 </span>
               </div>
 
@@ -217,7 +250,7 @@ export function Demo() {
               </div>
 
               <div className="space-y-2 mb-4">
-                {runResult.steps.map((step) => (
+                {displaySteps.map((step) => (
                   <div key={`${step.step}-${step.txHash ?? "nohash"}`} className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm text-zinc-300">{prettifyStepName(step.step)}</p>
@@ -227,10 +260,10 @@ export function Demo() {
                             ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
                             : step.status === "failed"
                               ? "border-red-500/25 bg-red-500/10 text-red-300"
-                              : "border-zinc-500/25 bg-zinc-500/10 text-zinc-300"
+                              : "border-zinc-500/25 bg-zinc-500/10 text-zinc-400"
                         }`}
                       >
-                        {step.status}
+                        {step.status === "skipped" && runLoading ? "running" : step.status}
                       </span>
                     </div>
                     {prettifyStepDetail(step.step, step.detail) && (
@@ -253,9 +286,11 @@ export function Demo() {
                 ))}
               </div>
 
-              <p className="text-xs text-zinc-500">{runResult.summary}</p>
+              <p className="text-xs text-zinc-500">
+                {runLoading ? "Executing on-chain steps in sequence..." : (runResult?.summary ?? "")}
+              </p>
 
-              {hasSuccessfulAdvance && (
+              {!runLoading && showFinalNarrative && hasSuccessfulAdvance && (
                 <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-4 mt-4">
                   <h4 className="text-sm font-medium text-zinc-200 mb-2">What just happened on-chain</h4>
                   <p className="text-xs text-zinc-400 leading-relaxed mb-3">
