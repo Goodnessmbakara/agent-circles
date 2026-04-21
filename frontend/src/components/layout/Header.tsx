@@ -12,10 +12,10 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/[0.06]"
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] overflow-visible"
         style={{ background: "rgba(9,9,11,0.85)", backdropFilter: "blur(20px)" }}
       >
-        <div className="mx-auto max-w-6xl px-5 h-[60px] flex items-center gap-6">
+        <div className="mx-auto max-w-6xl px-5 h-[60px] flex items-center gap-6 relative">
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
@@ -119,6 +119,8 @@ export function Header() {
             </button>
           </div>
         </div>
+        {/* Sketch-inspired center dip/curve under navbar */}
+        <div className="pointer-events-none absolute left-1/2 -bottom-[14px] -translate-x-1/2 w-[380px] h-7 rounded-b-[999px] border-x border-b border-white/[0.08] bg-[rgba(9,9,11,0.82)]" />
       </header>
 
       <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} />
