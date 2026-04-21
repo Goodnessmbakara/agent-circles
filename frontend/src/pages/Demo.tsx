@@ -108,6 +108,11 @@ export function Demo() {
     };
   }, [runResult]);
 
+  const hasSuccessfulAdvance = useMemo(
+    () => runResult?.steps.some((s) => s.step === "advance_round" && s.status === "success") ?? false,
+    [runResult],
+  );
+
   return (
     <div className="py-10">
       <div className="mx-auto max-w-6xl px-5">
@@ -249,6 +254,22 @@ export function Demo() {
               </div>
 
               <p className="text-xs text-zinc-500">{runResult.summary}</p>
+
+              {hasSuccessfulAdvance && (
+                <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-4 mt-4">
+                  <h4 className="text-sm font-medium text-zinc-200 mb-2">What just happened on-chain</h4>
+                  <p className="text-xs text-zinc-400 leading-relaxed mb-3">
+                    Think of this as one full ROSCA chapter. Five people entered the circle, each person paid into the shared
+                    pot, and then the contract closed the chapter by selecting who gets paid this round. No organizer had to
+                    chase payments or make a judgment call, because the rules were enforced automatically.
+                  </p>
+                  <p className="text-xs text-zinc-500 leading-relaxed">
+                    In plain terms, <span className="text-zinc-300">`advance_round` is the moment trust becomes action</span>:
+                    it confirms everyone did their part, sends the payout to this round’s member, records it on-chain, and
+                    moves the group to the next person in line.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
