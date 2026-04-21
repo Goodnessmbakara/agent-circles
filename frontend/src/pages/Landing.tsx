@@ -59,6 +59,15 @@ export function Landing() {
         />
 
         <div className="relative mx-auto max-w-3xl px-5">
+          {/* Sketch-inspired soft backdrop behind hero copy */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 w-[560px] max-w-[92vw] h-[260px] rounded-[52%_48%_50%_50%/42%_52%_48%_58%]"
+            style={{
+              background:
+                "radial-gradient(ellipse at 48% 42%, rgba(99,102,241,0.17) 0%, rgba(139,92,246,0.10) 46%, rgba(9,9,11,0) 82%)",
+              filter: "blur(1px)",
+            }}
+          />
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-zinc-50 leading-[1.1] mb-5">
             Savings circles,{" "}
             <span
