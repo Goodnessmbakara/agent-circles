@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError, api, type DemoRunResult, type DemoSeedResult } from "../lib/api";
 
 function truncate(s: string, n = 12) {
@@ -49,6 +49,21 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function Demo() {
+  const storyStepOrder: string[] = [
+    "fund_accounts",
+    "join_member_0",
+    "join_member_1",
+    "join_member_2",
+    "join_member_3",
+    "join_member_4",
+    "contribute_member_0",
+    "contribute_member_1",
+    "contribute_member_2",
+    "contribute_member_3",
+    "contribute_member_4",
+    "advance_round",
+  ];
+
   const [seedLoading, setSeedLoading] = useState(false);
   const [runLoading, setRunLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +71,7 @@ export function Demo() {
   const [runResult, setRunResult] = useState<DemoRunResult | null>(null);
   const [liveSteps, setLiveSteps] = useState<DemoRunResult["steps"]>([]);
   const [showFinalNarrative, setShowFinalNarrative] = useState(false);
+  const [progressStepCount, setProgressStepCount] = useState(0);
 
   async function handleSeed() {
     setSeedLoading(true);
@@ -80,20 +96,8 @@ export function Demo() {
     setError(null);
     setShowFinalNarrative(false);
     setRunResult(null);
-    setLiveSteps([
-      { step: "fund_accounts", status: "skipped", detail: "Waiting for demo run to start..." },
-      { step: "join_member_0", status: "skipped", detail: "Pending" },
-      { step: "join_member_1", status: "skipped", detail: "Pending" },
-      { step: "join_member_2", status: "skipped", detail: "Pending" },
-      { step: "join_member_3", status: "skipped", detail: "Pending" },
-      { step: "join_member_4", status: "skipped", detail: "Pending" },
-      { step: "contribute_member_0", status: "skipped", detail: "Pending" },
-      { step: "contribute_member_1", status: "skipped", detail: "Pending" },
-      { step: "contribute_member_2", status: "skipped", detail: "Pending" },
-      { step: "contribute_member_3", status: "skipped", detail: "Pending" },
-      { step: "contribute_member_4", status: "skipped", detail: "Pending" },
-      { step: "advance_round", status: "skipped", detail: "Pending" },
-    ]);
+    setProgressStepCount(1);
+    setLiveSteps([]);
     try {
       const data = await api.runDemo();
       setRunResult(data);
@@ -124,9 +128,19 @@ export function Demo() {
   }
 
   const displaySteps = useMemo(() => {
-    if (runLoading) return liveSteps;
+    if (runLoading) {
+      const reached = Math.max(1, progressStepCount);
+      return storyStepOrder.slice(0, reached).map((step, i) => {
+        const isCurrent = i === reached - 1;
+        return {
+          step,
+          status: isCurrent ? "skipped" : "success",
+          detail: isCurrent ? "Running this stage..." : "Stage reached",
+        } as DemoRunResult["steps"][number];
+      });
+    }
     return runResult?.steps ?? liveSteps;
-  }, [runLoading, runResult, liveSteps]);
+  }, [runLoading, runResult, liveSteps, progressStepCount, storyStepOrder]);
 
   const stepStats = useMemo(() => {
     const steps = displaySteps;
@@ -142,6 +156,14 @@ export function Demo() {
     () => displaySteps.some((s) => s.step === "advance_round" && s.status === "success"),
     [displaySteps],
   );
+
+  useEffect(() => {
+    if (!runLoading) return;
+    const id = setInterval(() => {
+      setProgressStepCount((n) => Math.min(storyStepOrder.length, n + 1));
+    }, 1200);
+    return () => clearInterval(id);
+  }, [runLoading, storyStepOrder.length]);
 
   return (
     <div className="py-10">
@@ -230,7 +252,9 @@ export function Demo() {
                   </p>
                 </div>
                 <span className="text-[11px] px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                  {runLoading ? "Running..." : `${stepStats.success}/${stepStats.total} success`}
+                  {runLoading
+                    ? `${Math.max(0, progressStepCount - 1)}/${storyStepOrder.length} reached`
+                    : `${stepStats.success}/${stepStats.total} success`}
                 </span>
               </div>
 
@@ -245,7 +269,7 @@ export function Demo() {
                 </div>
                 <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2">
                   <p className="text-[11px] text-zinc-500">Skipped</p>
-                  <p className="text-sm font-medium text-zinc-300">{stepStats.skipped}</p>
+                  <p className="text-sm font-medium text-zinc-300">{runLoading ? "0" : stepStats.skipped}</p>
                 </div>
               </div>
 
@@ -260,7 +284,9 @@ export function Demo() {
                             ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
                             : step.status === "failed"
                               ? "border-red-500/25 bg-red-500/10 text-red-300"
-                              : "border-zinc-500/25 bg-zinc-500/10 text-zinc-400"
+                              : runLoading
+                                ? "border-indigo-500/25 bg-indigo-500/10 text-indigo-300"
+                                : "border-zinc-500/25 bg-zinc-500/10 text-zinc-400"
                         }`}
                       >
                         {step.status === "skipped" && runLoading ? "running" : step.status}
