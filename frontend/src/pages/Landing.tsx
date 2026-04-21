@@ -97,14 +97,16 @@ export function Landing() {
       </section>
 
       {/* Stats bar */}
-      <section className="border-y border-white/[0.06] bg-[#111113]/60">
-        <div className="mx-auto max-w-6xl px-5 py-5 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0 md:divide-x md:divide-white/[0.06]">
-          {stats.map((s) => (
-            <div key={s.label} className="text-center md:px-8">
-              <div className="text-2xl font-bold tabular-nums text-zinc-50">{s.value}</div>
-              <div className="text-xs text-zinc-500 mt-0.5 tracking-wide">{s.label}</div>
-            </div>
-          ))}
+      <section className="py-6">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#111113]/60 px-4 py-5 md:px-0 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0 md:divide-x md:divide-white/[0.06]">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center md:px-8">
+                <div className="text-2xl font-bold tabular-nums text-zinc-50">{s.value}</div>
+                <div className="text-xs text-zinc-500 mt-0.5 tracking-wide">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
