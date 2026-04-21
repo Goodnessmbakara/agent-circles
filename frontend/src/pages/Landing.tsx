@@ -41,7 +41,7 @@ const stats = [
   { label: "Total Value Locked", value: "$2.4M" },
   { label: "Active Circles", value: "148" },
   { label: "Payouts Completed", value: "1,203" },
-  { label: "Avg. APY Equivalent", value: "0%" },
+  { label: "Avg. APY Equivalent", value: "20%" },
 ];
 
 export function Landing() {

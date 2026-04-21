@@ -12,7 +12,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] overflow-visible"
+      <header className="sticky top-0 z-40 overflow-visible"
         style={{ background: "rgba(9,9,11,0.85)", backdropFilter: "blur(20px)" }}
       >
         <div className="mx-auto max-w-6xl px-5 h-[60px] flex items-center gap-6 relative">
@@ -83,47 +83,60 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Right side — wallet first, assistant last */}
+          {/* Right side — wallet only (assistant becomes floating action button) */}
           <div className="flex items-center gap-2 ml-auto">
             <ConnectButton />
-
-            <div className="h-5 w-px bg-white/[0.08]" aria-hidden />
-
-            {/* Chat assistant (LLM help — not keeper / on-chain automation) */}
-            <button
-              type="button"
-              onClick={() => setAgentOpen(!agentOpen)}
-              title="Chat help for pools and ROSCAs — not automated round advancement"
-              aria-label="Open pool assistant chat"
-              className={`relative flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer ${
-                agentOpen
-                  ? "border-indigo-500/40 text-indigo-300"
-                  : "bg-white/[0.04] border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.07] hover:border-white/[0.12]"
-              }`}
-              style={agentOpen ? { background: "rgba(99,102,241,0.12)" } : {}}
-            >
-              {agentOpen && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
-                  <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
-                </span>
-              )}
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-                <path
-                  d="M2.5 3.5C2.5 2.95 2.95 2.5 3.5 2.5h6c.55 0 1 .45 1 1v4.5c0 .55-.45 1-1 1H6.2L4.5 11v-2H3.5c-.55 0-1-.45-1-1v-4.5z"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Assistant
-            </button>
           </div>
         </div>
-        {/* Sketch-inspired center dip/curve under navbar */}
-        <div className="pointer-events-none absolute left-1/2 -bottom-[14px] -translate-x-1/2 w-[380px] h-7 rounded-b-[999px] border-x border-b border-white/[0.08] bg-[rgba(9,9,11,0.82)]" />
+
+        {/* Inset lower border + smooth center curve (doesn't touch viewport edges) */}
+        <div className="pointer-events-none absolute left-1/2 -bottom-6 -translate-x-1/2 w-full max-w-6xl px-5">
+          <svg viewBox="0 0 1000 44" preserveAspectRatio="none" className="w-full h-11">
+            <path
+              d="M8 6 H410 C455 6 465 38 500 38 C535 38 545 6 590 6 H992"
+              fill="none"
+              stroke="rgba(255,255,255,0.10)"
+              strokeWidth="1.2"
+            />
+            <path
+              d="M8 6 H410 C455 6 465 38 500 38 C535 38 545 6 590 6 H992"
+              fill="none"
+              stroke="rgba(99,102,241,0.18)"
+              strokeWidth="0.8"
+            />
+          </svg>
+        </div>
       </header>
 
       <AgentDrawer open={agentOpen} onClose={() => setAgentOpen(false)} />
+
+      {/* Floating assistant trigger (sketch-inspired, bottom-right) */}
+      <button
+        type="button"
+        onClick={() => setAgentOpen(!agentOpen)}
+        title="Chat help for pools and ROSCAs — not automated round advancement"
+        aria-label="Open pool assistant chat"
+        className={`fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 h-12 px-4 rounded-full border shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+          agentOpen
+            ? "border-indigo-500/50 bg-indigo-500/20 text-indigo-200"
+            : "border-white/[0.14] bg-[rgba(20,20,24,0.92)] text-zinc-300 hover:text-zinc-100 hover:border-white/[0.24]"
+        }`}
+      >
+        {agentOpen && (
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
+            <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
+          </span>
+        )}
+        <svg width="14" height="14" viewBox="0 0 13 13" fill="none" aria-hidden>
+          <path
+            d="M2.5 3.5C2.5 2.95 2.95 2.5 3.5 2.5h6c.55 0 1 .45 1 1v4.5c0 .55-.45 1-1 1H6.2L4.5 11v-2H3.5c-.55 0-1-.45-1-1v-4.5z"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="text-xs font-medium">Assistant</span>
+      </button>
 
       {/* Mobile bottom tab bar */}
       <nav
@@ -162,32 +175,6 @@ export function Header() {
             Demo
           </Link>
 
-          {/* Assistant tab — chat help, not chain automation */}
-          <button
-            type="button"
-            onClick={() => setAgentOpen(!agentOpen)}
-            aria-label="Open pool assistant chat"
-            className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors cursor-pointer ${
-              agentOpen ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            <span className="relative">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
-                <path
-                  d="M4 5.5C4 4.67 4.67 4 5.5 4h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-2.3L9.5 17v-4H5.5C4.67 13 4 12.33 4 11.5v-6z"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {agentOpen && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-400">
-                  <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75" />
-                </span>
-              )}
-            </span>
-            Assistant
-          </button>
         </div>
       </nav>
     </>
