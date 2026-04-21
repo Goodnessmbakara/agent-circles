@@ -129,6 +129,8 @@ export function Demo() {
 
   const displaySteps = useMemo(() => {
     if (runLoading) {
+      // Once backend results are in, show real progressive steps (with txHash links).
+      if (liveSteps.length > 0) return liveSteps;
       const reached = Math.max(1, progressStepCount);
       return storyStepOrder.slice(0, reached).map((step, i) => {
         const isCurrent = i === reached - 1;
