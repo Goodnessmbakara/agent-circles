@@ -66,8 +66,10 @@ export function Footer() {
       </div>
 
       {/* Decorative Brand Text */}
-      <div className="absolute bottom-4 md:bottom-10 left-4 md:left-10 opacity-10 pointer-events-none">
-        <span className="text-4xl xs:text-6xl md:text-8xl font-black tracking-tighter text-white uppercase">Agent Circles</span>
+      <div className="absolute bottom-4 md:bottom-10 inset-x-0 opacity-10 pointer-events-none flex justify-center px-4 overflow-hidden">
+        <span className="text-[12vw] md:text-[15vw] font-black tracking-tighter text-white uppercase whitespace-nowrap leading-none">
+          Agent Circles
+        </span>
       </div>
     </footer>
   );
