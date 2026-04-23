@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router";
 import { Landing } from "./pages/Landing";
+import { About } from "./pages/About";
 import { Dashboard } from "./pages/Dashboard";
 import { CreatePool } from "./pages/CreatePool";
 import { PoolDetail } from "./pages/PoolDetail";
@@ -15,6 +16,7 @@ export function App() {
       <main className="flex-1 pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/about" element={<About />} />
           <Route path="/pools" element={<Dashboard />} />
           <Route path="/pools/create" element={<CreatePool />} />
           <Route path="/pools/:id" element={<PoolDetail />} />
