@@ -4,7 +4,7 @@ export function Footer() {
   const { pathname } = useLocation();
 
   return (
-    <footer className="relative mt-20 overflow-hidden bg-zinc-950/20">
+    <footer className="relative mt-20 overflow-hidden bg-zinc-950/20 pb-24 md:pb-0">
       {/* The Wavy Background Structure */}
       <div className="relative w-full flex flex-row items-end h-[200px] md:h-[300px]">
         
