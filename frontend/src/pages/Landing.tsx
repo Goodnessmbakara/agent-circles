@@ -58,10 +58,6 @@ export function Landing() {
         </div>
 
         <div className="relative mx-auto max-w-4xl px-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-bold uppercase tracking-widest mb-8 animate-fade-in">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-            Live on Stellar Soroban
-          </div>
           
           <h1 className="text-6xl sm:text-7xl font-extrabold tracking-tighter text-white leading-[1.05] mb-8">
             The next generation of{" "}
