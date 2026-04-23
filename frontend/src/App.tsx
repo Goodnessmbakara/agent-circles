@@ -6,6 +6,7 @@ import { PoolDetail } from "./pages/PoolDetail";
 import { JoinPool } from "./pages/JoinPool";
 import { Demo } from "./pages/Demo";
 import { Header } from "./components/layout/Header";
+import { Footer } from "./components/layout/Footer";
 
 export function App() {
   return (
@@ -21,6 +22,7 @@ export function App() {
           <Route path="/demo" element={<Demo />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
