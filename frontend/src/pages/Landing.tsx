@@ -195,7 +195,7 @@ export function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32">
+      <section id="waitlist" className="py-32">
         <div className="mx-auto max-w-6xl px-5">
           <div className="relative rounded-[3rem] border border-indigo-500/20 bg-indigo-500/[0.02] p-12 md:p-20 text-center overflow-hidden shadow-2xl">
             {/* Background glow */}
@@ -214,7 +214,12 @@ export function Landing() {
               </div>
               <div className="flex -space-x-3 items-center justify-center mt-10">
                   {[1,2,3,4].map(i => (
-                    <div key={i} className="w-10 h-10 rounded-full border-2 border-zinc-900 bg-zinc-800" />
+                    <img 
+                      key={i} 
+                      src={`/assets/avatars/${i}.png`} 
+                      alt={`Member ${i}`}
+                      className="w-10 h-10 rounded-full border-2 border-zinc-900 object-cover" 
+                    />
                   ))}
                   <span className="ml-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">+ 2.4k joined</span>
               </div>

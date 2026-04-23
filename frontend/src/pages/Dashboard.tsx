@@ -36,8 +36,8 @@ export function Dashboard() {
                 <circle cx="11" cy="12.5" r="1.5" fill="currentColor"/>
               </svg>
             </div>
-            <p className="text-zinc-300 font-medium mb-1">Connect your wallet</p>
-            <p className="text-zinc-500 text-sm">Connect to view and manage your savings circles.</p>
+            <p className="text-zinc-300 font-medium mb-1">Sign in</p>
+            <p className="text-zinc-500 text-sm">Sign in to view and manage your savings circles.</p>
           </div>
         )}
 

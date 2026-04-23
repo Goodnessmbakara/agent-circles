@@ -45,7 +45,7 @@ export function JoinPool() {
       <div className="py-10 mx-auto max-w-6xl px-5">
         <div className="card p-12 text-center max-w-sm mx-auto">
           <p className="text-zinc-300 font-medium mb-1">Wallet required</p>
-          <p className="text-zinc-500 text-sm">Connect your wallet to join this circle.</p>
+          <p className="text-zinc-500 text-sm">Sign in to join this circle.</p>
         </div>
       </div>
     );

@@ -64,8 +64,14 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Right side — wallet only (assistant becomes floating action button) */}
-          <div className="flex items-center gap-2 ml-auto">
+          {/* Right side */}
+          <div className="flex items-center gap-3 ml-auto">
+            <button 
+              onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
+              className="btn-primary py-1.5 px-5 text-xs font-bold"
+            >
+              Join Waitlist
+            </button>
             <ConnectButton />
           </div>
         </div>

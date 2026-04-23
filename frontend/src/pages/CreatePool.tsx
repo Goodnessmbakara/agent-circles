@@ -47,7 +47,7 @@ export function CreatePool() {
             </svg>
           </div>
           <p className="text-zinc-300 font-medium mb-1">Wallet required</p>
-          <p className="text-zinc-500 text-sm">Connect your wallet to create a savings circle.</p>
+          <p className="text-zinc-500 text-sm">Sign in to create a savings circle.</p>
         </div>
       </div>
     );

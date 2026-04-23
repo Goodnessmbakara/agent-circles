@@ -61,7 +61,7 @@ export function ConnectButton() {
 
   return (
     <button onClick={handleConnect} className="btn-primary text-xs px-4 py-2 cursor-pointer">
-      Connect Wallet
+      Sign In
     </button>
   );
 }
