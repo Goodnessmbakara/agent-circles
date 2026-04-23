@@ -12,6 +12,7 @@ export default {
           500: "#6366f1",
           600: "#4f46e5",
           700: "#4338ca",
+          primary: "#8B5CF6",
         },
         surface: {
           0: "#09090b",
@@ -21,7 +22,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        sans: ["Outfit", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
       backgroundImage: {
@@ -38,12 +39,17 @@ export default {
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "fade-in": "fadeIn 0.2s ease-out",
+        "fade-in": "fadeIn 0.5s ease-out forwards",
+        "gradient-x": "gradientX 3s ease infinite",
       },
       keyframes: {
         fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        gradientX: {
+          "0%, 100%": { "background-size": "200% 200%", "background-position": "left center" },
+          "50%": { "background-size": "200% 200%", "background-position": "right center" },
         },
       },
     },

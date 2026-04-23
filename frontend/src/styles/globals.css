@@ -22,7 +22,7 @@
   body {
     background-color: #09090b;
     color: #fafafa;
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: "Outfit", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.5;
   }
 
@@ -46,31 +46,34 @@
 @layer components {
   /* ── Cards ── */
   .card {
-    @apply bg-[#111113] rounded-2xl border border-white/[0.07] transition-all duration-200;
+    @apply bg-[#111113] rounded-2xl border border-white/[0.07] transition-all duration-300;
     box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.07);
   }
   .card-hover {
-    @apply hover:border-white/[0.14] hover:-translate-y-px;
+    @apply hover:border-[#8B5CF6]/30 hover:-translate-y-1;
   }
   .card-hover:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12);
+    box-shadow: 0 12px 24px -10px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1);
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           text-white font-medium text-sm
-           hover:brightness-110 active:scale-[0.98]
-           transition-all duration-150 cursor-pointer
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl
+           text-white font-semibold text-sm tracking-tight
+           hover:brightness-110 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]
+           active:scale-[0.98]
+           transition-all duration-200 cursor-pointer
            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           bg-white/[0.06] border border-white/[0.10] text-zinc-200 font-medium text-sm
-           hover:bg-white/[0.10] hover:border-white/[0.16] active:scale-[0.98]
-           transition-all duration-150 cursor-pointer
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl
+           bg-white/[0.03] border border-white/[0.08] text-zinc-300 font-medium text-sm
+           hover:bg-white/[0.08] hover:border-white/[0.15] hover:text-white
+           active:scale-[0.98]
+           transition-all duration-200 cursor-pointer
            disabled:opacity-40 disabled:cursor-not-allowed;
+    backdrop-filter: blur(8px);
   }
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl

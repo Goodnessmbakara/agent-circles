@@ -19,38 +19,19 @@ export function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-            {/* Mark */}
-            <div className="relative w-8 h-8 flex items-center justify-center">
-              {/* Outer ring */}
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="absolute inset-0">
-                <circle cx="16" cy="16" r="14" stroke="url(#ring-grad)" strokeWidth="1.5" strokeOpacity="0.5"/>
-                <defs>
-                  <linearGradient id="ring-grad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6366f1"/>
-                    <stop offset="1" stopColor="#8b5cf6" stopOpacity="0.3"/>
-                  </linearGradient>
-                </defs>
+            <div className="relative w-8 h-8">
+              <svg viewBox="0 0 100 100" className="w-full h-full fill-[#8B5CF6] group-hover:opacity-80 transition-opacity">
+                <path d="M5 75L25 25H45L25 75H5Z" />
+                <circle cx="68" cy="50" r="28" />
               </svg>
-              {/* Orbiting dots */}
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="absolute inset-0">
-                <circle cx="16" cy="4"  r="2.2" fill="#6366f1"/>
-                <circle cx="26" cy="10" r="1.7" fill="#818cf8" fillOpacity="0.7"/>
-                <circle cx="26" cy="22" r="1.5" fill="#818cf8" fillOpacity="0.5"/>
-                <circle cx="16" cy="28" r="1.5" fill="#818cf8" fillOpacity="0.35"/>
-                <circle cx="6"  cy="22" r="1.5" fill="#818cf8" fillOpacity="0.25"/>
-                <circle cx="6"  cy="10" r="1.7" fill="#818cf8" fillOpacity="0.15"/>
-              </svg>
-              {/* Center emerald dot */}
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 relative z-10"
-                style={{ boxShadow: "0 0 8px rgba(52,211,153,0.6)" }} />
             </div>
 
             <div className="flex flex-col leading-none">
-              <span className="text-[13px] font-semibold text-zinc-100 group-hover:text-white transition-colors tracking-tight">
-                Agent Circles
+              <span className="text-[14px] font-bold text-white tracking-tight uppercase font-sans">
+                Agent Circle
               </span>
-              <span className="text-[10px] text-zinc-600 tracking-widest uppercase mt-0.5">
-                on Stellar
+              <span className="text-[10px] text-zinc-500 tracking-[0.2em] uppercase mt-0.5 font-sans">
+                On Stellar
               </span>
             </div>
           </Link>
