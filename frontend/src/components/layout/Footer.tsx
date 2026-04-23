@@ -36,8 +36,8 @@ export function Footer() {
         <div className="flex-1 h-[140px] md:h-[200px] bg-zinc-900/60 border-t border-white/5 relative group transition-all duration-500 hover:bg-zinc-900/90">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent" />
           <div className="relative h-full flex flex-col justify-center gap-1">
-            <Link to="/about" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-[10px] md:text-sm font-medium">About</Link>
-            <Link to="/demo" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-[10px] md:text-sm font-medium">Demo</Link>
+            <Link to="/about" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-xs md:text-sm font-medium">About</Link>
+            <Link to="/demo" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-xs md:text-sm font-medium">Demo</Link>
           </div>
           {/* Curve to Stage 3 */}
           <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-full w-12 md:w-20 h-12 md:h-20 pointer-events-none">
@@ -53,13 +53,13 @@ export function Footer() {
           <div className="relative h-full flex flex-col justify-center gap-1">
              <button 
                 onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-4 md:px-10 py-1.5 md:py-2 text-left text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-[10px] md:text-sm font-medium"
+                className="px-4 md:px-10 py-1.5 md:py-2 text-left text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-xs md:text-sm font-medium"
              >
                 Waitlist
              </button>
-             <Link to="/pools" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-[10px] md:text-sm font-medium">Pool</Link>
+             <Link to="/pools" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-xs md:text-sm font-medium">Pool</Link>
              {pathname !== '/' && (
-               <Link to="/login" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-[10px] md:text-sm font-medium">Sign In</Link>
+               <Link to="/login" className="px-4 md:px-10 py-1.5 md:py-2 text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-xs md:text-sm font-medium">Sign In</Link>
              )}
           </div>
         </div>
