@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex-1 h-[100px] bg-zinc-900/50 border-t border-white/5 relative group transition-all duration-500 hover:h-[120px]">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent" />
           <div className="relative h-full flex flex-col justify-center px-10">
-            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
+            <a href="https://x.com/AgentCircles" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
               X.com
             </a>
           </div>
