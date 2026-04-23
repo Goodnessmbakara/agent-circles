@@ -114,36 +114,82 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-24 relative">
+      {/* How it Works / Features Showcase */}
+      <section className="py-32 relative">
         <div className="mx-auto max-w-6xl px-5">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
-                Designed for Trust. <br />
-                <span className="text-zinc-500">Powered by Agents.</span>
-              </h2>
-              <p className="text-zinc-400 text-lg">
-                We've combined centuries-old community savings models with state-of-the-art blockchain automation.
-              </p>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent hidden md:block mb-6 mx-8" />
+          <div className="text-center mb-24">
+            <h2 className="text-5xl font-extrabold text-white tracking-tighter mb-4">
+              Simple . Fast . Secure
+            </h2>
+            <div className="h-1.5 w-24 bg-indigo-500 mx-auto rounded-full" />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="card card-hover p-8 group">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/[0.08] flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <div className="w-6 h-6 stroke-[1.5]">
-                    {f.icon}
+          <div className="space-y-32">
+            {/* Step 1: Rotating Payouts */}
+            <div className="relative group">
+              <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+                <div className="flex-1 order-2 md:order-1">
+                  <h3 className="text-3xl font-bold text-white mb-6">Rotating Payouts</h3>
+                  <p className="text-zinc-400 text-lg leading-relaxed mb-8 max-w-md">
+                    Each member takes turns receiving the full pooled payout. Everyone contributes equally, everyone wins on their round.
+                  </p>
+                  <div className="h-px w-full bg-zinc-800" />
+                </div>
+                <div className="flex-1 order-1 md:order-2 relative">
+                  <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl group-hover:border-indigo-500/30 transition-colors duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-transparent z-10" />
+                    <img src="/assets/payouts.png" alt="Rotating Payouts UI" className="w-full h-auto grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700" />
+                    <div className="absolute top-0 right-0 h-full w-20 bg-indigo-600 flex items-center justify-center">
+                      <span className="text-5xl font-black text-white/90">1</span>
+                    </div>
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{f.title}</h3>
-                <p className="text-zinc-400 leading-relaxed font-medium">
-                  {f.description}
-                </p>
               </div>
-            ))}
+            </div>
+
+            {/* Step 2: Autonomous Operations */}
+            <div className="relative group">
+              <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+                <div className="flex-1 relative order-1">
+                  <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl group-hover:border-indigo-500/30 transition-colors duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-transparent to-transparent z-10" />
+                    <img src="/assets/agents.png" alt="Autonomous Agents UI" className="w-full h-auto grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700" />
+                    <div className="absolute top-0 left-0 h-full w-20 bg-indigo-500 flex items-center justify-center">
+                      <span className="text-5xl font-black text-white/90">2</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 order-2">
+                  <h3 className="text-3xl font-bold text-white mb-6 text-left">Autonomous Operations</h3>
+                  <p className="text-zinc-400 text-lg leading-relaxed mb-8 max-w-md">
+                    On-chain agents advance rounds automatically when all contributions are received — no trusted third party required.
+                  </p>
+                  <div className="h-px w-full bg-zinc-800" />
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Fully On-Chain */}
+            <div className="relative group">
+              <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+                <div className="flex-1 order-2 md:order-1">
+                  <h3 className="text-3xl font-bold text-white mb-6">Fully On-Chain</h3>
+                  <p className="text-zinc-400 text-lg leading-relaxed mb-8 max-w-md">
+                    Built on Stellar Soroban. Every deposit, payout, and state change is verifiable on-chain — no custodians, no middlemen.
+                  </p>
+                  <div className="h-px w-full bg-zinc-800" />
+                </div>
+                <div className="flex-1 order-1 md:order-2 relative">
+                  <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl group-hover:border-indigo-500/30 transition-colors duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-transparent z-10" />
+                    <img src="/assets/onchain.png" alt="Fully On-Chain UI" className="w-full h-auto grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700" />
+                    <div className="absolute top-0 right-0 h-full w-20 bg-indigo-700 flex items-center justify-center">
+                      <span className="text-5xl font-black text-white/90">3</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

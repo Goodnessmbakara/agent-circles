@@ -26,12 +26,12 @@ export function Header() {
               </svg>
             </div>
 
-            <div className="flex flex-col leading-none">
+            <div className="flex flex-col leading-[0.9]">
               <span className="text-[14px] font-bold text-white tracking-tight uppercase font-sans">
-                Agent Circle
+                Agent
               </span>
-              <span className="text-[10px] text-zinc-500 tracking-[0.2em] uppercase mt-0.5 font-sans">
-                On Stellar
+              <span className="text-[14px] font-bold text-white tracking-tight uppercase font-sans">
+                Circles
               </span>
             </div>
           </Link>
