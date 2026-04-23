@@ -11,8 +11,14 @@ export function DynamicProvider({ children }: { children: React.ReactNode }) {
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: environmentId || 'your_dynamic_environment_id_here',
+        environmentId: environmentId || 'bf38eac3-30a2-4e66-883a-cffad9a5d4f2',
         walletConnectors: [StellarWalletConnectors],
+        initialAuthenticationMode: 'connect-only',
+        events: {
+          onAuthFailure: (method, reason) => {
+            console.error('Dynamic Auth Failure:', method, reason);
+          }
+        }
       }}
     >
       {children}
