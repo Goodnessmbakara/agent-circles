@@ -103,7 +103,7 @@ export function Header() {
         onClick={() => setAgentOpen(!agentOpen)}
         title="Chat help for pools and ROSCAs — not automated round advancement"
         aria-label="Open pool assistant chat"
-        className={`fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 h-12 px-4 rounded-full border shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+        className={`fixed bottom-[35%] md:bottom-6 right-4 md:right-6 z-40 h-12 px-4 rounded-full border shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-all duration-200 cursor-pointer flex items-center gap-2 ${
           agentOpen
             ? "border-indigo-500/50 bg-indigo-500/20 text-indigo-200"
             : "border-white/[0.14] bg-[rgba(20,20,24,0.92)] text-zinc-300 hover:text-zinc-100 hover:border-white/[0.24]"
