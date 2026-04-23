@@ -72,7 +72,7 @@ export function Header() {
             >
               Join Waitlist
             </button>
-            <ConnectButton />
+            {pathname !== '/' && <ConnectButton />}
           </div>
         </div>
 
