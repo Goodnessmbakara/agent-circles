@@ -71,6 +71,13 @@ export const config = {
     "ROSCA_POOL_WASM_PATH",
     "../target/wasm32-unknown-unknown/release/rosca_pool.wasm",
   ),
+
+  // Partna API
+  partnaApiKey: env("PARTNA_API_KEY", ""),
+  partnaApiSecret: env("PARTNA_API_SECRET", ""),
+  partnaWebhookSecret: env("PARTNA_WEBHOOK_SECRET", ""),
+  /** Use sandbox for dev, production for live */
+  partnaBaseUrl: env("PARTNA_BASE_URL", "https://api-sandbox.getpartna.com"),
 } as const;
 
 function env(key: string, fallback: string): string {

@@ -215,4 +215,18 @@ export const api = {
     request<DemoSeedResult>("/demo/seed", { method: "POST", body: "{}" }),
   runDemo: () =>
     request<DemoRunResult>("/demo/run", { method: "POST", body: "{}" }),
+
+  // --- Ramp endpoints ---
+  createOnRamp: (body: { poolId: string; userId: string; amountNGN: number; stellarWalletAddress: string }) =>
+    request<{ orderId: string; bankName: string; accountNumber: string; accountName: string; amount: number; expiresAt: string; reference: string }>("/ramp/onramp", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  createOffRamp: (body: { poolId: string; userId: string; amountUSDC: number; bankCode: string; accountNumber: string; accountName: string }) =>
+    request<{ orderId: string; depositAddress: string; memo?: string; amountUSDC: number; estimatedNGN: number; fxRate: number; reference: string }>("/ramp/offramp", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getRampOrder: (orderId: string) =>
+    request<{ orderId: string; status: string; amountCrypto?: number; failureReason?: string }>(`/ramp/order/${orderId}`),
 };

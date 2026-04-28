@@ -6,6 +6,7 @@ import { poolRoutes } from "./routes/pools.js";
 import { txRoutes } from "./routes/tx.js";
 import { agentRoutes } from "./routes/agent.js";
 import { demoRoutes } from "./routes/demo.js";
+import { rampRoutes } from "./routes/ramp.js";
 import { startKeeper } from "./services/keeper.js";
 
 const app = Fastify({ logger: true });
@@ -18,6 +19,7 @@ await app.register(poolRoutes, { prefix: "/api" });
 await app.register(txRoutes, { prefix: "/api" });
 await app.register(agentRoutes, { prefix: "/api" });
 await app.register(demoRoutes, { prefix: "/api" });
+await app.register(rampRoutes, { prefix: "/api" });
 
 app.get("/health", async () => ({
   status: "ok",

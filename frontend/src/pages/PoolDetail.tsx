@@ -8,6 +8,7 @@ import { MemberList } from "../components/pool/MemberList";
 import { RoundCountdown } from "../components/pool/RoundCountdown";
 import { formatUsdc, stateLabel, cn } from "../lib/utils";
 import { explorerTxUrl } from "../lib/stellar";
+import { RampModal } from "../components/ramp/RampModal";
 import type { Pool } from "../lib/api";
 
 function StatePill({ state }: { state: Pool["state"] }) {
@@ -32,6 +33,7 @@ export function PoolDetail() {
   const submitTx = useSubmitTx();
   const [txStatus, setTxStatus] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [isRampOpen, setIsRampOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -79,6 +81,8 @@ export function PoolDetail() {
       setTxStatus(`Error: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   }
+
+  const openRamp = () => setIsRampOpen(true);
 
   const isMember = pool.members.some((m) => m.member === address);
   const isActive = pool.state === "Active";
@@ -168,23 +172,21 @@ export function PoolDetail() {
               <div className="amount-sm text-zinc-200">{formatUsdc(pool.contribution)} USDC</div>
             </div>
 
-            <button
-              onClick={handleContribute}
-              disabled={submitTx.isPending}
-              className="btn-primary"
-            >
-              {submitTx.isPending ? (
-                <>
-                  <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
-                    <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  Signing…
-                </>
-              ) : (
-                "Contribute"
-              )}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleContribute}
+                disabled={submitTx.isPending}
+                className="btn-secondary flex-1"
+              >
+                {submitTx.isPending ? "Signing…" : "Contribute USDC"}
+              </button>
+              <button
+                onClick={openRamp}
+                className="btn-primary flex-1"
+              >
+                Contribute Naira
+              </button>
+            </div>
 
             {txStatus && (
               <div className={cn(
@@ -229,6 +231,16 @@ export function PoolDetail() {
           </div>
         )}
       </div>
+
+      <RampModal 
+        isOpen={isRampOpen}
+        onClose={() => setIsRampOpen(false)}
+        poolId={id!}
+        userId={address!}
+        amountUSDC={pool.contribution / 1_000_000} // Assuming 6 decimals for USDC
+        action="contribute"
+        onSuccess={handleContribute}
+      />
     </div>
   );
 }

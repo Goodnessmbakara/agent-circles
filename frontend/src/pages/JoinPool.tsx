@@ -5,14 +5,16 @@ import { useWalletStore } from "../stores/wallet-store";
 import { useSubmitTx } from "../hooks/use-tx";
 import { api } from "../lib/api";
 import { formatUsdc } from "../lib/utils";
+import { RampModal } from "../components/ramp/RampModal";
 
 export function JoinPool() {
   const { id } = useParams<{ id: string }>();
   const { data: pool, isLoading } = usePool(id!);
-  const { address } = useWalletStore();
+  const { address, isAccountActive, isFunding } = useWalletStore();
   const navigate = useNavigate();
   const submitTx = useSubmitTx();
   const [error, setError] = useState<string | null>(null);
+  const [isRampOpen, setIsRampOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -51,8 +53,14 @@ export function JoinPool() {
     );
   }
 
+  const isAlreadyMember = pool.members.some(m => m.member === address);
+
   async function handleJoin() {
     if (!address || !id) return;
+    if (isAlreadyMember) {
+      setError("You are already a member of this savings circle.");
+      return;
+    }
     setError(null);
     try {
       const result = await api.buildJoin(id, address);
@@ -60,10 +68,21 @@ export function JoinPool() {
       if (txResult.status === "SUCCESS") {
         navigate(`/pools/${id}`);
       } else {
-        setError(`Transaction failed: ${txResult.error ?? txResult.status}`);
+        // Try to provide a better error message from tx results
+        const detail = txResult.error ? `: ${txResult.error}` : "";
+        setError(`Transaction failed${detail}. This could be due to insufficient funds or network congestion.`);
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to join pool");
+    } catch (err: any) {
+      console.error("Pool join failure:", err);
+      const msg = err.message || String(err);
+      
+      if (msg.includes("HostError")) {
+        setError("Smart contract error: You might already be a member or the pool is full.");
+      } else if (msg.includes("404") || msg.includes("not found") || msg.includes("400")) {
+        setError("Account not found on-chain. Please wait a few seconds for the network to sync.");
+      } else {
+        setError(msg);
+      }
     }
   }
 
@@ -138,37 +157,60 @@ export function JoinPool() {
                 {pool.max_members} rounds. Your payout position is assigned at join time.
               </div>
 
-              {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3 mb-4">
-                  <p className="text-red-400 text-sm">{error}</p>
+              {isFunding && (
+                <div className="rounded-xl border border-blue-500/20 bg-blue-500/8 px-4 py-3 mb-6">
+                  <div className="flex items-center gap-3">
+                    <svg className="animate-spin text-blue-400" width="16" height="16" viewBox="0 0 14 14" fill="none">
+                      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                      <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <p className="text-blue-400 text-xs leading-relaxed">
+                      Setting up your wallet on the Stellar network... This usually takes 5-10 seconds.
+                    </p>
+                  </div>
                 </div>
               )}
 
-              <div className="flex gap-3">
+              {error && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3 mb-4 overflow-hidden">
+                  <p className="text-red-400 text-xs leading-relaxed break-words">
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={handleJoin}
-                  disabled={submitTx.isPending}
+                  onClick={() => setIsRampOpen(true)}
+                  disabled={submitTx.isPending || isAlreadyMember || (isFunding || !isAccountActive)}
                   className="btn-primary flex-1"
                 >
-                  {submitTx.isPending ? (
-                    <>
-                      <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
-                        <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                      Signing…
-                    </>
-                  ) : (
-                    "Confirm and Join"
-                  )}
+                  Join with Naira
                 </button>
-                <Link to={`/pools/${pool.contract_id}`} className="btn-secondary">
+                <button
+                  onClick={handleJoin}
+                  disabled={submitTx.isPending || isAlreadyMember || (isFunding || !isAccountActive)}
+                  className="btn-secondary flex-1 px-4"
+                >
+                  Join with USDC
+                </button>
+                <Link to={`/pools/${pool.contract_id}`} className="btn-secondary px-4">
                   Cancel
                 </Link>
               </div>
             </div>
           </div>
         </div>
+
+        <RampModal 
+          isOpen={isRampOpen}
+          onClose={() => setIsRampOpen(false)}
+          poolId={id!}
+          userId={address!}
+          amountUSDC={pool.contribution / 1_000_000}
+          action="join"
+          onSuccess={handleJoin}
+        />
       </div>
     </div>
   );

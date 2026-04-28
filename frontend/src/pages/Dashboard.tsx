@@ -59,8 +59,8 @@ export function Dashboard() {
         )}
 
         {error && (
-          <div className="card border-red-500/20 p-5">
-            <p className="text-red-400 text-sm">
+          <div className="card border-red-500/20 p-5 overflow-hidden">
+            <p className="text-red-400 text-xs leading-relaxed break-words">
               Failed to load pools: {(error as Error).message}
             </p>
           </div>

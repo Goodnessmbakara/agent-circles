@@ -1,5 +1,6 @@
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { StellarWalletConnectors } from "@dynamic-labs/stellar";
+import { WalletSync } from "./WalletSync";
 
 export function DynamicProvider({ children }: { children: React.ReactNode }) {
   // Use env var if present, otherwise fallback to the primary production ID
@@ -18,6 +19,7 @@ export function DynamicProvider({ children }: { children: React.ReactNode }) {
         }
       }}
     >
+      <WalletSync />
       {children}
     </DynamicContextProvider>
   );

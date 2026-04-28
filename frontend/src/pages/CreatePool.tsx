@@ -22,17 +22,17 @@ function randomSaltHex(): string {
 }
 
 export function CreatePool() {
-  const { address } = useWalletStore();
+  const { address, isAccountActive, isFunding } = useWalletStore();
   const navigate = useNavigate();
   const submitTx = useSubmitTx();
 
   const [poolName, setPoolName] = useState("");
   /** Server-side automation: keeper submits advance_round when rules allow (separate from chat assistant). */
-  const [keeperEnabled, setKeeperEnabled] = useState(true);
+  const keeperEnabled = true;
   const [contribution, setContribution] = useState("10");
   const [period, setPeriod] = useState(30);
   const [maxMembers, setMaxMembers] = useState(5);
-  const [feeBps, setFeeBps] = useState(200);
+  const feeBps = 200; // fixed 2% platform agent fee
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,8 +99,15 @@ export function CreatePool() {
 
       await api.registerPool(cid, poolName.trim(), keeperEnabled);
       navigate("/pools");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create pool");
+    } catch (err: any) {
+      console.error("Pool creation failure:", err);
+      const msg = err.message || String(err);
+      
+      if (msg.includes("404") || msg.includes("not found") || msg.includes("400") || (err.code === "account_not_funded")) {
+        setError("Account not found on-chain. Please wait a few seconds for the network to sync. If you just funded your wallet, it may take 10-15 seconds.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -163,33 +170,6 @@ export function CreatePool() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-zinc-200">Automate round advances</p>
-                    <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-                      When on, the server <span className="text-zinc-400">agent key</span> may submit{" "}
-                      <code className="text-zinc-500">advance_round</code> for this pool (you still sign joins
-                      yourself). Turn off if you only want manual or third-party advancement. The chat assistant
-                      is unchanged.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={keeperEnabled}
-                    onClick={() => setKeeperEnabled((v) => !v)}
-                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                      keeperEnabled ? "bg-indigo-600" : "bg-zinc-700"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                        keeperEnabled ? "left-6" : "left-1"
-                      }`}
-                    />
-                  </button>
-                </div>
-
                 <div>
                   <label className="label">Contribution per round (USDC)</label>
                   <input
@@ -231,36 +211,31 @@ export function CreatePool() {
                   />
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="label !mb-0">Manager fee</label>
-                    <span className="text-sm font-medium text-zinc-300 tabular-nums">
-                      {(feeBps / 100).toFixed(1)}%
-                    </span>
+                {isFunding && (
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/8 px-4 py-3 mb-6">
+                    <div className="flex items-center gap-3">
+                      <svg className="animate-spin text-blue-400" width="16" height="16" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                        <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <p className="text-blue-400 text-xs leading-relaxed">
+                        Setting up your wallet on the Stellar network... This usually takes 5-10 seconds.
+                      </p>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={500}
-                    step={50}
-                    value={feeBps}
-                    onChange={(e) => setFeeBps(Number(e.target.value))}
-                    className="w-full accent-indigo-500"
-                  />
-                  <div className="flex justify-between text-[11px] text-zinc-600 mt-1">
-                    <span>0%</span><span>2.5%</span><span>5%</span>
-                  </div>
-                </div>
+                )}
 
                 {error && (
-                  <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3">
-                    <p className="text-red-400 text-sm">{error}</p>
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-3 overflow-hidden">
+                    <p className="text-red-400 text-xs leading-relaxed break-words">
+                      {error}
+                    </p>
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  disabled={loading || submitTx.isPending}
+                  disabled={loading || submitTx.isPending || (isFunding || !isAccountActive)}
                   className="btn-primary w-full py-3"
                 >
                   {loading || submitTx.isPending ? (
@@ -270,6 +245,14 @@ export function CreatePool() {
                         <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                       Creating circle…
+                    </>
+                  ) : isFunding || !isAccountActive ? (
+                    <>
+                      <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                        <path d="M7 1.5C4 1.5 1.5 4 1.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      Activating Wallet…
                     </>
                   ) : (
                     "Create Circle"
@@ -292,10 +275,6 @@ export function CreatePool() {
                     {poolName.trim() || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-zinc-500 shrink-0">Auto-advance</span>
-                  <span className="text-zinc-200">{keeperEnabled ? "On" : "Off"}</span>
-                </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Contribution</span>
                   <span className="text-zinc-200 tabular-nums">
@@ -317,7 +296,7 @@ export function CreatePool() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Manager fee</span>
+                  <span className="text-zinc-500">Agent fee <span className="text-zinc-600">(2%)</span></span>
                   <span className="text-zinc-200 tabular-nums">
                     {totalPot > 0 ? `-${feeAmount.toFixed(2)} USDC` : "—"}
                   </span>
@@ -332,7 +311,7 @@ export function CreatePool() {
               </div>
 
               <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 text-xs text-zinc-500 leading-relaxed">
-                You'll be set as the circle manager and will receive the fee from each round's payout.
+                A 2% agent fee is collected by the platform from each round's payout.
               </div>
             </div>
           </div>

@@ -13,7 +13,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 overflow-visible"
-        style={{ background: "rgba(9,9,11,0.85)", backdropFilter: "blur(20px)" }}
+        style={{ background: "transparent" }}
       >
         <div className="mx-auto max-w-6xl px-5 h-[60px] flex items-center gap-6 relative">
 

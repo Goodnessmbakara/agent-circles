@@ -35,6 +35,7 @@ export async function buildContractTx(params: BuildTxParams): Promise<BuildTxRes
     account = await server.getAccount(params.sourceAddress);
   } catch (e: unknown) {
     const raw = e instanceof Error ? e.message : String(e);
+    console.error(`Backend failed to fetch account ${params.sourceAddress} from RPC:`, raw);
     if (/Account not found|Not Found/i.test(raw)) {
       const fb = `https://friendbot.stellar.org?addr=${encodeURIComponent(params.sourceAddress)}`;
       throw Object.assign(
@@ -89,6 +90,7 @@ export async function buildUploadWasmTx(params: {
     account = await server.getAccount(params.sourceAddress);
   } catch (e: unknown) {
     const raw = e instanceof Error ? e.message : String(e);
+    console.error(`Backend failed to fetch account ${params.sourceAddress} from RPC:`, raw);
     if (/Account not found|Not Found/i.test(raw)) {
       const fb = `https://friendbot.stellar.org?addr=${encodeURIComponent(params.sourceAddress)}`;
       throw Object.assign(
@@ -140,6 +142,7 @@ export async function buildCreateCustomContractTx(params: {
     account = await server.getAccount(params.sourceAddress);
   } catch (e: unknown) {
     const raw = e instanceof Error ? e.message : String(e);
+    console.error(`Backend failed to fetch account ${params.sourceAddress} from RPC:`, raw);
     if (/Account not found|Not Found/i.test(raw)) {
       const fb = `https://friendbot.stellar.org?addr=${encodeURIComponent(params.sourceAddress)}`;
       throw Object.assign(

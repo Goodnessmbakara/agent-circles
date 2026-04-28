@@ -1,21 +1,24 @@
 # Agent Circles — Product Requirements Document
 
-**Version:** 1.1  
-**Date:** 2026-04-19  
+**Version:** 1.2  
+**Date:** 2026-04-27  
 **Status:** Living — reflects implemented MVP + roadmap (codebase-aligned)
 
 ---
 
 ## 1. Problem Statement
 
-Rotating Savings and Credit Associations (ROSCAs) — known as *ajo*, *susu*, *chit funds*, *tandas* — are one of the oldest financial coordination mechanisms. Billions of people use them. They fail for two reasons:
+Rotating Savings and Credit Associations (ROSCAs) — known as *ajo*, *susu*, *chit funds*, *tandas* — are one of the oldest financial coordination mechanisms. Billions of people use them. They fail for three reasons:
 
-1. **Trust breakdown.** A member collects the pot early and disappears. There is no enforcement mechanism beyond social pressure.
-2. **Coordination overhead.** Someone must track contributions, remind members, handle disputes, and manage the schedule. This is unpaid labor.
+1. **Administrator trust breakdown.** The person holding the pot disappears. A member who saved faithfully for two years shows up for their turn — and finds the administrator's phone is off, one grey tick. There is no enforcement mechanism beyond social pressure, and social pressure is not enough even when you know the administrator personally, even when you know their family.
 
-Blockchain solves (1) — funds are locked in a contract with deterministic rules. But raw contract interfaces are hostile to the communities that actually use ROSCAs. They need **guidance**, **reminders**, and **operational management** — not a block explorer.
+2. **Post-payout default.** A separate and equally damaging failure mode: a member receives the pot early in the rotation and then stops contributing. They got what they came for. Everyone who was supposed to receive after them is left shortchanged, with no recourse. This is distinct from the administrator problem — it is a *member* trust problem, and it is not solved simply by removing the administrator.
 
-**Agent Circles** solves both problems: **on-chain enforcement** for trust, a **keeper service** for permissionless round automation, and an **LLM assistant** (optional UX) for explanations, pool lookup, and join prep — not a single ambiguous “agent.”
+3. **Coordination overhead.** Someone must track contributions, remind members, handle disputes, and manage the schedule. This is unpaid labor — and the person doing it is usually the same person everyone is trusting not to disappear.
+
+Blockchain solves (1) — funds are locked in a contract with deterministic rules, no administrator holds the pot. But it does not automatically solve (2), and raw contract interfaces are hostile to the communities that actually use ROSCAs. They need **guidance**, **reminders**, **behavioral incentives**, and **operational management** — not a block explorer.
+
+**Agent Circles** solves all three problems: **on-chain enforcement** eliminates the administrator risk, a **keeper service** handles coordination automatically, and a **reputation + incentive system** (see §5.4) addresses post-payout default without requiring upfront collateral from users who may not have it.
 
 ---
 
@@ -252,6 +255,60 @@ These are the **only** tools wired to the pool assistant today (`backend/src/age
 
 ---
 
+### 5.4 Post-Payout Default Prevention
+
+> **Context:** Removing the administrator (via smart contract) solves the most visible ROSCA failure. But a second failure mode remains: a member receives their payout early in the rotation and then stops contributing. No collateral was taken; no social pressure remains strong enough. This section defines Agent Circles' layered response to this problem — designed specifically for non-crypto-native users in emerging markets who cannot be expected to lock up upfront capital.
+
+#### Design principle
+
+> Reputation is collateral. The goal is to make the cost of default *future-facing* rather than *upfront-financial* — so that the system is inclusive at entry but increasingly costly to abuse over time.
+
+#### Layer 1 — On-Chain Participation History (Phase 2)
+
+Every wallet that interacts with an Agent Circles pool accumulates a transparent, immutable on-chain record:
+
+- Total rounds participated in across all pools
+- Total rounds contributed on time
+- Number of defaults (missed contributions after payout received)
+- Number of complete cycles (all rounds fulfilled)
+
+This history is **public and queryable** — pool creators and members can inspect any wallet's record before admitting them to a circle. New users start with a blank slate (not penalized); repeat defaulters carry a visible record they cannot erase.
+
+**Implementation notes:**
+- History aggregated off-chain by the backend registry (Phase 2); migrated to an on-chain reputation contract (Phase 3) for full trustlessness.
+- Queried via a new assistant tool: `get_wallet_reputation(address)` — returns score, cycle count, default count.
+- Pool creation form gains an optional **minimum reputation score** filter: the contract rejects join attempts from wallets below the threshold.
+
+#### Layer 2 — Smart Incentive Structure (Phase 2)
+
+Post-payout default is a rational economic choice if the only cost is social pressure. Layer 2 makes the cost real by attaching future access to current behavior:
+
+**Priority queue for future payouts:**
+- Members who complete a full cycle with no defaults earn **priority payout position** in their next pool — they can choose an earlier slot in the rotation.
+- Members who default after receiving their payout are automatically placed at the **last position** in their next circle's payout queue (not excluded — recoverable).
+- Two or more defaults within a rolling 12-month window triggers a **30-day cooldown** before joining new pools.
+
+**How this changes behavior:**
+- Early-round recipients (high default risk) have a concrete future stake: their next payout position depends on completing this cycle.
+- Late-round members (lower default risk) are rewarded for their patience with faster future access.
+- Defaulters are not permanently excluded — recovery is possible — but re-entry costs are real and visible.
+
+**Implementation notes:**
+- Priority queue enforced at join time by the backend registry cross-referencing wallet reputation.
+- Cooldown enforced on-chain via a `last_default_timestamp` field in the reputation contract (Phase 3); backend-enforced in registry for Phase 2.
+- The assistant surfaces this to members: *"Your current participation score gives you priority access in your next circle."*
+
+#### Out of scope (documented for future reference)
+
+The following mechanisms were evaluated and deferred:
+
+- **Collateral/slashing** — Requires upfront stablecoin holdings; excludes the primary target market. Viable as an opt-in feature for large pools (>$500 equivalent) in Phase 3.
+- **Insurance pool** — Platform-funded default coverage is a Phase 3 consideration once default rate data exists. Actuarially risky to implement before baseline data is collected.
+- **Randomized payout order** — Research shows this *increases* default risk vs. fixed order. Not recommended.
+- **Joint liability** — Members covering each other's defaults. Culturally familiar but regressive; penalizes members with least liquidity. Deferred to Phase 3 as an opt-in group setting.
+
+---
+
 ## 6. Technical Architecture Summary
 
 See **SRS** if present for full detail. Summary:
@@ -337,11 +394,15 @@ Stellar Testnet
 - Treasury allowlist (one DEX path for idle USDC)
 - Multiple assets beyond USDC
 - Mainnet deployment
+- **Post-payout default prevention — Layer 1:** Off-chain participation history per wallet; `get_wallet_reputation` assistant tool; minimum reputation filter on pool creation (see §5.4)
+- **Post-payout default prevention — Layer 2:** Priority payout queue for future circles based on completion history; 30-day cooldown for repeat defaulters; assistant surfaces reputation status to members (see §5.4)
 
 ### Phase 3: Scale
 
 - Pool discovery / marketplace
-- Reputation system (on-chain contribution history)
+- **Reputation contract on-chain:** Migrate wallet history from backend registry to a Soroban reputation contract — fully trustless, no reliance on Agent Circles backend to verify track record (see §5.4)
+- **Opt-in collateral for large pools:** Stablecoin collateral + auto-slash for pools above a configurable size threshold; yield-bearing while locked (see §5.4 — "Out of scope" items)
+- **Platform insurance pool:** Default coverage funded by transaction fees once baseline default-rate data exists (see §5.4)
 - Multi-agent competition (agents compete on fee + reliability)
 - Mobile (React Native or PWA)
 - Fiat on/off ramp integration
@@ -374,6 +435,7 @@ Stellar Testnet
 | Soroban RPC rate limits / instability       | Demo fails                       | Cache aggressively; have fallback read from Horizon; test on testnet early  |
 | Scope creep (DeFi treasury features)        | Miss core ROSCA                  | Economy v1 = idle USDC only; no DeFi in MVP                                 |
 | Contract storage TTL expiry                 | Pool state archived mid-rotation | Bump TTL on every interaction; set 60-day extend                            |
+| Post-payout member default                  | Late-round members shortchanged; trust in platform erodes | Layer 1 + 2 reputation system (§5.4); priority queue disincentivises exit; full collateral option deferred to Phase 3 |
 
 
 ---

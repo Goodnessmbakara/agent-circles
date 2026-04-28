@@ -1,24 +1,3 @@
-import {
-  StellarWalletsKit,
-  KitEventType,
-  Networks,
-} from "@creit.tech/stellar-wallets-kit";
-import { FreighterModule, FREIGHTER_ID } from "@creit.tech/stellar-wallets-kit/modules/freighter";
-
-export { StellarWalletsKit, KitEventType, Networks, FREIGHTER_ID };
-
-let initialized = false;
-
-export function initWalletKit(): void {
-  if (initialized) return;
-  initialized = true;
-  StellarWalletsKit.init({
-    network: Networks.TESTNET,
-    selectedWalletId: FREIGHTER_ID,
-    modules: [new FreighterModule()],
-  });
-}
-
 export const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 export const EXPLORER_URL = "https://stellar.expert/explorer/testnet";
 
@@ -31,7 +10,26 @@ export function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-/** Free testnet XLM — account must exist on-chain before Soroban can build txs. */
 export function friendbotUrl(address: string): string {
   return `https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`;
+}
+
+export async function checkAccountExists(address: string): Promise<boolean> {
+  try {
+    const horizonUrl = "https://horizon-testnet.stellar.org";
+    const response = await fetch(`${horizonUrl}/accounts/${address}`);
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function fundWithFriendbot(address: string): Promise<boolean> {
+  try {
+    const response = await fetch(friendbotUrl(address));
+    return response.ok;
+  } catch (e) {
+    console.error("Friendbot funding failed:", e);
+    return false;
+  }
 }
