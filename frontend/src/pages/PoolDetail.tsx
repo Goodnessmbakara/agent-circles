@@ -7,7 +7,7 @@ import { api } from "../lib/api";
 import { MemberList } from "../components/pool/MemberList";
 import { RoundCountdown } from "../components/pool/RoundCountdown";
 import { formatUsdc, stateLabel, cn } from "../lib/utils";
-import { explorerTxUrl } from "../lib/stellar";
+import { explorerTxUrl, explorerContractUrl } from "../lib/stellar";
 import { RampModal } from "../components/ramp/RampModal";
 import type { Pool } from "../lib/api";
 
@@ -105,9 +105,18 @@ export function PoolDetail() {
                 Pools
               </Link>
               <span className="text-zinc-700">/</span>
-              <span className="font-mono text-sm text-zinc-400">
+              <a
+                href={explorerContractUrl(pool.contract_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-sm text-zinc-400 hover:text-indigo-400 transition-colors flex items-center gap-1"
+                title={pool.contract_id}
+              >
                 {pool.contract_id.slice(0, 8)}…{pool.contract_id.slice(-6)}
-              </span>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="opacity-60">
+                  <path d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7M8 1h3m0 0v3m0-3L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-semibold text-zinc-50">

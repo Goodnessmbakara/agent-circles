@@ -5,6 +5,10 @@ export function explorerTxUrl(hash: string): string {
   return `${EXPLORER_URL}/tx/${hash}`;
 }
 
+export function explorerContractUrl(contractId: string): string {
+  return `${EXPLORER_URL}/contract/${contractId}`;
+}
+
 export function shortenAddress(address: string): string {
   if (address.length <= 12) return address;
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
