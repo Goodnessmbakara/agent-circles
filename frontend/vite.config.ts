@@ -12,4 +12,10 @@ export default defineConfig({
   define: {
     global: "globalThis",
   },
+  resolve: {
+    dedupe: ["@stellar/stellar-sdk", "@stellar/stellar-base", "@stellar/js-xdr"],
+  },
+  optimizeDeps: {
+    include: ["@stellar/stellar-sdk", "@stellar/stellar-base", "@stellar/js-xdr"],
+  },
 });

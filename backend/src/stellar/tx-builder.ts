@@ -7,6 +7,9 @@ import {
   TransactionBuilder,
   xdr,
 } from "@stellar/stellar-sdk";
+// NOTE: We deliberately use the V1 contract-creation XDR (hostFunctionTypeCreateContract = 1)
+// instead of Operation.createCustomContract() which always emits V2 (value 3).
+// Dynamic's WaaS signing client cannot parse V2 XDR, so we construct the host function manually.
 import { Api, assembleTransaction } from "@stellar/stellar-sdk/rpc";
 import { getRpcServer } from "./client.js";
 import { config } from "../config.js";
@@ -155,11 +158,20 @@ export async function buildCreateCustomContractTx(params: {
     throw e;
   }
 
-  const op = Operation.createCustomContract({
-    address: Address.fromString(params.sourceAddress),
-    wasmHash: params.wasmHash,
-    salt: params.salt,
-    constructorArgs: [],
+  // V1 contract creation — compatible with all Stellar SDK/js-xdr versions
+  const op = Operation.invokeHostFunction({
+    func: xdr.HostFunction.hostFunctionTypeCreateContract(
+      new xdr.CreateContractArgs({
+        contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+          new xdr.ContractIdPreimageFromAddress({
+            address: Address.fromString(params.sourceAddress).toScAddress(),
+            salt: params.salt,
+          }),
+        ),
+        executable: xdr.ContractExecutable.contractExecutableWasm(params.wasmHash),
+      }),
+    ),
+    auth: [],
   });
 
   const tx = new TransactionBuilder(account, {

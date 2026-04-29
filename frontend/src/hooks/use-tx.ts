@@ -14,11 +14,11 @@ export function useSubmitTx() {
       }
 
       // After page refresh the WaaS connector loses its activeAccountAddress.
-      // setActiveAccountAddress() is the public setter — call it before signing.
+      // afterWalletSelectHook() is the public method that restores it before signing.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connector = (primaryWallet as any)._connector;
-      if (connector?.setActiveAccountAddress && primaryWallet.address) {
-        connector.setActiveAccountAddress(primaryWallet.address);
+      if (connector?.afterWalletSelectHook && primaryWallet.address) {
+        connector.afterWalletSelectHook(primaryWallet.address);
       }
 
       const signedTxXdr = await primaryWallet.signTransaction(unsignedXdr);
