@@ -14,7 +14,7 @@ import { Api, assembleTransaction } from "@stellar/stellar-sdk/rpc";
 import { getRpcServer } from "./client.js";
 import { config } from "../config.js";
 
-const TIMEOUT_SEC = 30;
+const TIMEOUT_SEC = 300;
 
 export interface BuildTxParams {
   contractId: string;
