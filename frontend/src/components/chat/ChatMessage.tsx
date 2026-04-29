@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import type { AgentChatAction } from "../../lib/api";
 import { AgentChatActions } from "./AgentChatActions";
 
@@ -6,39 +7,6 @@ interface ChatMessageProps {
   content: string;
   actions?: AgentChatAction[];
   actionsDisabled?: boolean;
-}
-
-function LineWithBold({ line }: { line: string }) {
-  const parts = line.split(/(\*\*[^*]+\*\*)/g);
-  return (
-    <>
-      {parts.map((part, i) => {
-        const m = part.match(/^\*\*(.+)\*\*$/);
-        if (m) {
-          return (
-            <strong key={i} className="font-semibold text-zinc-50">
-              {m[1]}
-            </strong>
-          );
-        }
-        return <span key={i}>{part}</span>;
-      })}
-    </>
-  );
-}
-
-function FormattedText({ text, className }: { text: string; className?: string }) {
-  const lines = text.split("\n");
-  return (
-    <div className={className}>
-      {lines.map((line, lineIdx) => (
-        <span key={lineIdx}>
-          {lineIdx > 0 && <br />}
-          <LineWithBold line={line} />
-        </span>
-      ))}
-    </div>
-  );
 }
 
 export function ChatMessage({ role, content, actions, actionsDisabled }: ChatMessageProps) {
@@ -69,7 +37,73 @@ export function ChatMessage({ role, content, actions, actionsDisabled }: ChatMes
             : "bg-surface-1/90 border border-white/[0.08] text-zinc-200 rounded-bl-md border-l-2 border-l-brand-500/50"
         }`}
       >
-        <FormattedText text={content} />
+        {isUser ? (
+          <span>{content}</span>
+        ) : (
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => (
+                <p className="font-semibold text-zinc-50 text-[14px] mb-1">{children}</p>
+              ),
+              h2: ({ children }) => (
+                <p className="font-semibold text-zinc-50 text-[13px] mb-1">{children}</p>
+              ),
+              h3: ({ children }) => (
+                <p className="font-semibold text-zinc-100 mb-0.5">{children}</p>
+              ),
+              p: ({ children }) => (
+                <p className="mb-1.5 last:mb-0">{children}</p>
+              ),
+              strong: ({ children }) => (
+                <strong className="font-semibold text-zinc-50">{children}</strong>
+              ),
+              em: ({ children }) => (
+                <em className="italic text-zinc-300">{children}</em>
+              ),
+              ul: ({ children }) => (
+                <ul className="mb-1.5 space-y-0.5 pl-3">{children}</ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="mb-1.5 space-y-0.5 pl-4 list-decimal">{children}</ol>
+              ),
+              li: ({ children }) => (
+                <li className="relative pl-1 before:content-['–'] before:absolute before:-left-2.5 before:text-zinc-500">
+                  {children}
+                </li>
+              ),
+              code: ({ children }) => (
+                <code className="font-mono text-[11px] bg-white/[0.07] border border-white/[0.1] rounded px-1 py-0.5 text-zinc-300 break-all">
+                  {children}
+                </code>
+              ),
+              pre: ({ children }) => (
+                <pre className="font-mono text-[11px] bg-white/[0.05] border border-white/[0.08] rounded-lg p-2.5 overflow-x-auto mb-1.5 text-zinc-300">
+                  {children}
+                </pre>
+              ),
+              hr: () => (
+                <div className="border-t border-white/[0.08] my-2" />
+              ),
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-2 border-brand-500/40 pl-2.5 text-zinc-400 italic mb-1.5">
+                  {children}
+                </blockquote>
+              ),
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-400 hover:text-brand-300 underline underline-offset-2 transition-colors"
+                >
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        )}
         {!isUser && actions && actions.length > 0 && (
           <AgentChatActions actions={actions} disabled={actionsDisabled} />
         )}
