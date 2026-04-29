@@ -37,8 +37,8 @@ export function AgentDrawer({ open, onClose }: AgentDrawerProps) {
     setMessages(history);
     setLoading(true);
 
-    // Send full history (excluding welcome) to the agent
-    const chatHistory = history.filter((m) => m !== WELCOME);
+    // Send full history to the agent so numbered replies have context
+    const chatHistory = history.map(({ role, content }) => ({ role, content }));
 
     try {
       const { reply, actions } = await api.agentChat(chatHistory, address ?? undefined);
