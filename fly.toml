@@ -17,3 +17,7 @@ primary_region = "iad"
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
+
+[mounts]
+  source = "agent_circles_data"
+  destination = "/app/data"

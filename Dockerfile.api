@@ -3,11 +3,14 @@
 # syntax=docker/dockerfile:1
 FROM node:20-bookworm-slim AS node-build
 WORKDIR /app
-COPY backend/package*.json ./
-RUN npm ci
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY backend/package.json backend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
-RUN npm run build
+RUN pnpm run build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -15,10 +18,13 @@ ARG GIT_COMMIT=unknown
 ENV GIT_COMMIT=${GIT_COMMIT}
 ENV NODE_ENV=production
 ENV ROSCA_POOL_WASM_PATH=/app/rosca_pool.wasm
-COPY backend/package*.json ./
-RUN npm ci --omit=dev
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY backend/package.json backend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=node-build /app/dist ./dist
 COPY artifacts/rosca_pool.wasm ./rosca_pool.wasm
-RUN mkdir -p data
+RUN mkdir -p /app/data
 EXPOSE 3001
 CMD ["node", "dist/index.js"]
