@@ -183,6 +183,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  /**
+   * One-shot deploy via backend agent — used to avoid Dynamic WaaS choking on
+   * Protocol-22 V2 auth XDR returned by simulation for contract creation.
+   */
+  deployPoolContract: (salt: string) =>
+    request<{ contract_id: string; agent_address: string; upload_hash: string; create_hash: string }>(
+      "/pools/deploy",
+      { method: "POST", body: JSON.stringify({ salt }) },
+    ),
   registerPool: (contract_id: string, name?: string, keeper_enabled = true) =>
     request<{ registered: boolean; contract_id: string }>("/pools/register", {
       method: "POST",

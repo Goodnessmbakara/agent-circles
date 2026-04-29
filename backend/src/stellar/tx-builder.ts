@@ -219,3 +219,51 @@ export async function buildAndSignWithAgent(
 
   return tx.toXDR();
 }
+
+/**
+ * Upload WASM and create a contract using the backend agent key, returning the
+ * derived contract_id. The user signs only the subsequent `initialize` call.
+ *
+ * This sidesteps the Protocol-22 RPC behavior where contract-creation simulations
+ * include `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` (value 2)
+ * auth entries that older client SDKs (incl. the one bundled by Dynamic WaaS)
+ * cannot parse via `TransactionBuilder.fromXDR()`.
+ */
+export async function deployContractWithAgent(
+  wasm: Buffer,
+  salt: Buffer,
+): Promise<{ contractId: string; agentAddress: string; uploadHash: string; createHash: string }> {
+  const agentKeypair = Keypair.fromSecret(config.agentSecretKey);
+  const agentAddress = agentKeypair.publicKey();
+
+  const upload = await buildUploadWasmTx({ sourceAddress: agentAddress, wasm });
+  const uploadTx = TransactionBuilder.fromXDR(upload.unsignedXdr, config.networkPassphrase);
+  uploadTx.sign(agentKeypair);
+  const { submitSignedTx } = await import("./tx-submit.js");
+  const uploadResult = await submitSignedTx(uploadTx.toXDR());
+  if (uploadResult.status !== "SUCCESS") {
+    throw new Error(`Agent WASM upload failed: ${uploadResult.error ?? uploadResult.status}`);
+  }
+
+  const create = await buildCreateCustomContractTx({
+    sourceAddress: agentAddress,
+    wasmHash: upload.wasmHash,
+    salt,
+  });
+  const createTx = TransactionBuilder.fromXDR(create.unsignedXdr, config.networkPassphrase);
+  createTx.sign(agentKeypair);
+  const createResult = await submitSignedTx(createTx.toXDR());
+  if (createResult.status !== "SUCCESS") {
+    throw new Error(`Agent contract create failed: ${createResult.error ?? createResult.status}`);
+  }
+
+  const { deriveCustomContractId } = await import("./contract-id.js");
+  const contractId = deriveCustomContractId(config.networkPassphrase, agentAddress, salt);
+
+  return {
+    contractId,
+    agentAddress,
+    uploadHash: uploadResult.hash,
+    createHash: createResult.hash,
+  };
+}

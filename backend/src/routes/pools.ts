@@ -4,7 +4,7 @@ import { Address, hash, nativeToScVal, StrKey, TransactionBuilder, xdr } from "@
 import { deriveCustomContractId } from "../stellar/contract-id.js";
 import { getHorizonServer } from "../stellar/client.js";
 import { readRoscaWasmBuffer } from "../stellar/rosca-wasm.js";
-import { buildContractTx, buildCreateCustomContractTx, buildUploadWasmTx } from "../stellar/tx-builder.js";
+import { buildContractTx, buildCreateCustomContractTx, buildUploadWasmTx, deployContractWithAgent } from "../stellar/tx-builder.js";
 import { poolInfoToApi } from "../stellar/pool-api.js";
 import { getPoolInfo } from "../stellar/pool-reader.js";
 import { config } from "../config.js";
@@ -149,6 +149,29 @@ export async function poolRoutes(app: FastifyInstance) {
         unsignedXdr: built.unsignedXdr,
         simulationResult: built.simulationResult,
         contract_id: contractId,
+      },
+    };
+  });
+
+  /**
+   * Deploy a pool contract using the backend agent key (one-shot).
+   * Sidesteps Protocol-22 V2 auth XDR that Dynamic WaaS cannot parse — only
+   * the subsequent `initialize` call needs to be signed by the user.
+   */
+  app.post("/pools/deploy", async (request) => {
+    const body = z.object({ salt: z.string().regex(/^[0-9a-f]{64}$/i) }).parse(request.body);
+    if (!config.agentSecretKey) {
+      throw Object.assign(new Error("Backend agent key not configured"), { statusCode: 500 });
+    }
+    const wasm = await readRoscaWasmBuffer();
+    const salt = hexToBuffer(body.salt.toLowerCase());
+    const result = await deployContractWithAgent(wasm, salt);
+    return {
+      data: {
+        contract_id: result.contractId,
+        agent_address: result.agentAddress,
+        upload_hash: result.uploadHash,
+        create_hash: result.createHash,
       },
     };
   });

@@ -60,26 +60,11 @@ export function CreatePool() {
     setError(null);
 
     try {
-      const upload = await api.buildDeployUpload(address);
-      const tx1 = await submitTx.mutateAsync(upload.unsignedXdr);
-      if (tx1.status !== "SUCCESS") {
-        setError(`Upload WASM failed: ${formatSubmitError(tx1)}`);
-        return;
-      }
-
+      // Backend agent uploads WASM and creates the contract — avoids Dynamic
+      // WaaS XDR-parse error on Protocol-22 V2 contract-creation auth entries.
       const salt = randomSaltHex();
-      const created = await api.buildDeployCreate({
-        source: address,
-        wasm_hash: upload.wasm_hash_hex,
-        salt,
-      });
-      const tx2 = await submitTx.mutateAsync(created.unsignedXdr);
-      if (tx2.status !== "SUCCESS") {
-        setError(`Create contract failed: ${formatSubmitError(tx2)}`);
-        return;
-      }
-
-      const cid = created.contract_id;
+      const deployed = await api.deployPoolContract(salt);
+      const cid = deployed.contract_id;
 
       const init = await api.buildCreatePool({
         contract_id: cid,
@@ -133,8 +118,8 @@ export function CreatePool() {
             <div className="card p-6">
               <h1 className="text-lg font-semibold text-zinc-50 mb-1">Create a Circle</h1>
               <p className="text-sm text-zinc-500 mb-6">
-                Configure your savings circle. Creating a circle will open your wallet three times: deploy the pool
-                contract, then initialize it with the settings below.
+                Configure your savings circle. Your wallet will be opened once to sign the initialize call
+                with the settings below; deployment is handled server-side.
               </p>
 
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 mb-6 text-xs text-amber-200/90 leading-relaxed">
